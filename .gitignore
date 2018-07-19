@@ -1,3 +1,6 @@
 # ignore files in this directory
 abe_schemes/other_abe_schemes/
 
+
+# ignore __init__.py file
+abe_schemes/__init__.py
