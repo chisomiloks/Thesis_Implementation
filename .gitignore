@@ -4,7 +4,7 @@ src/abe_schemes/other_abe_schemes/
 xml_module/
 venv/
 tests/.pytest_cache/
-tests/.pytest_cache/v/
+tests/.pytest_cache/v/cache
 
 # ignore __init__.py file
 __init__.py
