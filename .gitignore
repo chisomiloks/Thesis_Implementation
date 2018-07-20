@@ -1,6 +1,8 @@
 # ignore files in this directory
-abe_schemes/other_abe_schemes/
-
+src/abe_schemes/other_abe_schemes/
+.idea/
+xml_module/
+venv/
 
 # ignore __init__.py file
-abe_schemes/__init__.py
+__init__.py
