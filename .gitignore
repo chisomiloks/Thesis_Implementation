@@ -3,6 +3,7 @@ src/abe_schemes/other_abe_schemes/
 .idea/
 xml_module/
 venv/
+.pytest_cache/
 
 # ignore __init__.py file
 __init__.py
