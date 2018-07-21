@@ -1,6 +1,10 @@
 """
+Module for the interfacing of ABE components of framework with symmetric file encryption
 
+:Authors: Munachiso Ilokah
+:Date: 07-2018
 """
+
 from Crypto.Cipher import AES
 from Crypto.Protocol import KDF
 from Crypto.Random import get_random_bytes
@@ -37,14 +41,14 @@ def abe_key_extract(sym_key):
 
 def encrypt(pwd, data):
     """
-        Encryption function that encrypts a string using EAS encryption with 128 bit key
+    Encryption function that encrypts a string using EAS encryption with 128 bit key
 
-        :param pwd:     encryption key (first 128 bits to be used if longer than 128)
-        :param data:    string to be encrypted
-        :return:        ciphertext
-        """
+    :param pwd:     encryption key (first 128 bits to be used if longer than 128)
+    :param data:    string to be encrypted
+    :return:        ciphertext
+    """
     salt = get_random_bytes(8)
-    key = KDF.PBKDF2(pwd[:128], salt)  # truncates key to max 128
+    key = KDF.PBKDF2(pwd[:128], salt)  # pwd[:128] truncates key to max 128
     iv = get_random_bytes(16)
     cipher = AES.new(key, AES.MODE_CFB, iv)
     return salt + iv + cipher.encrypt(data)
@@ -58,7 +62,7 @@ def decrypt(pwd, msg):
         :param msg:     string to be decrypted
         :return:        plaintext message
         """
-    key = KDF.PBKDF2(pwd[:128], msg[:8])  # pwd[:128] truncates key to max 128 byte size for AES encryption (serialize converts to string that is 174 bits)
+    key = KDF.PBKDF2(pwd[:128], msg[:8])  # pwd[:128] truncates key to max 128
     cipher = AES.new(key, AES.MODE_CFB, msg[8:24])
     return cipher.decrypt(msg[24:])
 
