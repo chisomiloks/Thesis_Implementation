@@ -33,9 +33,9 @@ class EERDAC(object):
         Global setup for scheme run by the CA to generate the Global Master Key (GMK)
         and the Global Public Parameters (GPP)
 
-        :return: GMK, GPK
+        :return: GMK, GPP
         """
-        # bilinear group G or prime p is selected
+        # bilinear group G of prime p is selected
         # select generator g of G
         g = self.group.random(G1)
         # select random oracle which maps inputs to an element of G
