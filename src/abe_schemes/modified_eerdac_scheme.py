@@ -1,9 +1,5 @@
 """
-Kan Yang, Xiaohua Jia
-
-| From: Expressive, Efficient, and Revocable Data Access Control for Multi-Authority Cloud Storage
-| Published in: IEEE Transactions on Parallel and Distributed Systems, Vol. 25, No. 7, July 2014
-| Available From: http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=6620875&tag=1
+Placeholder for original implementation. Currently moving to the final module files.
 
 * type: Multi-Authority Ciphertext Policy Attribute Based Encryption
 * setting: Pairing
