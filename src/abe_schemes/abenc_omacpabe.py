@@ -15,12 +15,14 @@
 :Date: 07-2018
 """
 
-from charm.toolbox.pairinggroup import PairingGroup
+# from charm.toolbox.pairinggroup import PairingGroup
 from charm.toolbox.pairinggroup import ZR
 from charm.toolbox.pairinggroup import G1
-from charm.toolbox.pairinggroup import GT
+# from charm.toolbox.pairinggroup import GT
 from charm.toolbox.pairinggroup import pair
 from charm.toolbox.secretutil import SecretUtil
+
+# from time import clock
 
 
 class OMACPABE(object):
@@ -31,7 +33,7 @@ class OMACPABE(object):
         self.group = group_object
 
     # certificate authority (CA) setup function
-    def ca_setup(self):
+    def abenc_casetup(self):
         """
         Global setup function run by the CA to generate the
         Global Master Key (GMK) and the Global Public Parameters (GPP)
@@ -57,7 +59,7 @@ class OMACPABE(object):
 
         return (GPP, GMK)
 
-    def user_reg(self, GPP, entity='user'):
+    def abenc_userreg(self, GPP, entity='user'):
         """
         User registration by Certificate Authority (CA) to generate corresponding
         key pairs (i.e. Public and Private keys)
@@ -86,7 +88,7 @@ class OMACPABE(object):
 
         return (GPK_uid, GSK_uid_prime), {'GSK_uid': GSK_uid, 'GPK_uid_prime': GPK_uid_prime, 'u_uid': u_uid}
 
-    def aa_reg(self, GPP, authority_id, attributes, registered_authorities):
+    def abenc_aareg(self, GPP, authority_id, attributes, registered_authorities):
         """
         Registration of Attribute Authorities (AA) by the Certificate Authority (CA)
         :param GPP: Global Public Parameters (GPP)
@@ -132,13 +134,217 @@ class OMACPABE(object):
             }
         return (SK_aid, PK_aid, authority_attributes)
 
-    def key_gen(self, GPP, authority, attribute, userObj, USK=None):
+    def abenc_keygen(self, GPP, authority, attribute, user_object, USK=None):
         """
-        
-        :param GPP:
-        :param authority:
-        :param attribute:
-        :param userObj:
-        :param USK:
-        :return:
+        Generate attribute authority related secret keys for users (executed by the corresponding attribute authority)
+        :param GPP: Global Public Parameters
+        :param authority: Attribute Authority Parameters
+        :param attribute: Attribute for which secret key is being generated
+        :param user_object: User
+        :param USK: Generated attribute authority related user secret key
+        :return: User Secret Key (USK)
         """
+        # generate random integer to tie attribute secret key to user
+        if 't' not in user_object:
+            user_object['t'] = self.group.random(ZR)
+        t = user_object['t']
+
+        # assign corresponding attribute authority parameters
+        ASK, APK, authority_attrs = authority
+
+        u = user_object
+
+        # create USK data set if none exists already
+        if USK is None:
+            USK = {}
+
+        if 'K_uid_aid' not in USK or 'K_uid_aid_prime' not in USK or 'AK_uid_aid' not in USK:
+            USK['K_uid_aid'] = (u['GPK_uid_prime'] ** ASK['alpha_aid']) * (GPP['g_a'] ** u['u_uid']) * (GPP['g_b'] ** t)
+            USK['K_uid_aid_prime'] = GPP['g'] ** t
+            USK['AK_uid_aid'] = {}
+
+        # generate attribute specific secret key parameters
+        AK_uid_aid = (GPP['g'] ** (t * ASK['beta_aid'])) * authority_attrs[attribute]['PK'][0] \
+                     ** (ASK['beta_aid'] * (u['u_uid'] + ASK['gamma_aid']))
+        USK['AK_uid_aid'][attribute] = AK_uid_aid
+
+        return USK
+
+    def abenc_encrypt(self, GPP, policy_string, k, authority):
+        """
+        Encryption algorithm which encrypts the message given, based on the policy
+        :param GPP: Global Public Parameters
+        :param policy_string: Policy
+        :param k: Content Key (i.e group element based on AES key)
+        :param authority: Attribute Authority Parameters
+        :return: Ciphertext
+        """
+        APK = {}
+        authority_attributes = {}
+        authority_g_beta_inv = {}
+
+        # extract the APK for the different authorities
+        for authority_temp in authority.keys():
+            APK[authority_temp] = authority[authority_temp][1]
+
+            # extract the PK values of the attributes of the attribute authorities
+            # extract the corresponding g_beta_inverse values for the attribute authorities
+            for item in authority[authority_temp][2].keys():
+                authority_attributes[item] = authority[authority_temp][2][item]
+                authority_g_beta_inv[item] = APK[authority_temp]['g_beta_aid_inv']
+
+        # extract policy and use policy elements to slit the secret
+        # into their corresponding shares for encryption
+        policy = self.util.createPolicy(policy_string)
+
+        # generate secret through random element
+        secret = self.group.random(ZR)
+
+        # split secret into shares (this returns a list)
+        shares = self.util.calculateSharesList(secret, policy)
+
+        # process shares list to create a dict with attribute as key
+        # and corresponding shares as value
+        shares = dict([(x[0].getAttributeAndIndex(), x[1]) for x in shares])
+
+        # initialize blinding factor to hide key
+        blinding_factor = 1
+
+        for authority_temp in authority.keys():
+            blinding_factor *= APK[authority_temp]['e_alpha']
+
+        # create C elements of encrypted file
+        C = k * (blinding_factor ** secret)
+        C_prime = GPP['g'] ** secret
+        C_prime_prime = GPP['g_b'] ** secret
+
+        # create structure (dict) to hold the C_i and D_i elements of the encrypted file
+        # these are the components related to the attributes
+        C_i = {}
+        C_i_prime = {}
+        D_i = {}
+        D_i_prime = {}
+
+        # generate C_i and D_i elements
+        for attribute, secret_share in shares.items():
+            # attribute_temp = self.util.strip_index(attribute)
+            # generate random r_i element
+            k_attr = self.util.strip_index(attribute)
+            r_i = self.group.random(ZR)
+            attribute_PK = authority_attributes[attribute]
+
+            C_i[attribute] = (GPP['g_a'] ** secret_share) * ~(attribute_PK['PK'][0] ** r_i)
+            C_i_prime[attribute] = GPP['g'] ** r_i
+            D_i[attribute] = authority_g_beta_inv[attribute] ** r_i
+            D_i_prime[attribute] = attribute_PK['PK'][1] ** r_i
+
+        return {'C': C,
+                'C_prime': C_prime,
+                'C_prime_prime': C_prime_prime,
+                'C_i': C_i,
+                'C_i_prime': C_i_prime,
+                'D_i': D_i,
+                'D_i_prime': D_i_prime,
+                'policy': policy_string,
+                }
+
+    def abenc_generatetoken(self, GPP, CT, UASK, user_keys):
+        """
+        Partial decryption of the ciphertext
+
+        :param GPP: Global Public Parameters
+        :param CT: Ciphertext elements
+        :param UASK: Secret Keys for user gotten from Attribute Authorities
+        :param user_keys: User global keys
+        :return: Partially decrypted ciphertext
+        """
+
+        # list to hold corresponding attributes possessed by the user
+        user_attributes = []
+
+        for authority in UASK.keys():
+            user_attributes.extend(UASK[authority]['AK_uid_aid'].keys())
+
+        # access ciphertext policy
+        encryption_policy = self.util.createPolicy(CT['policy'])
+
+        # generate list of minimum policy elements needed for encryption
+        # returns False if user fails policy assessment
+        minimal_policy_list = self.util.prune(encryption_policy, user_attributes)
+
+        # this is an error handling implementation tht should be fixed later
+        if not minimal_policy_list:
+            return False
+
+        # get attribute coefficients to be able to access their share of the secret
+        coefficients = self.util.getCoefficients(encryption_policy)
+        # initialize the dividend value for the token generation computation
+        dividend = 1
+
+        for authority in UASK.keys():
+            dividend *= (pair(CT['C_prime'], UASK[authority]['K_uid_aid']) *
+                         ~pair(CT['C_prime_prime'], UASK[authority]['K_uid_aid_prime']))
+
+        # attribute authority index?
+        n_a = 1
+
+        # initialize divisor value for token generation computation
+        divisor = 1
+
+        # create dict to hold attributes for the authorities and their corresponding secret keys
+        attribute_keys = {}
+
+        # create dict to hold attributes contained in the pruned list and their corresponding secret keys
+        pruned_attribute_keys = {}
+
+        # populate attribute with with corresponding key value pairs
+        for authority in UASK.keys():
+            attribute_keys.update(UASK[authority]['AK_uid_aid'])
+
+        # populate pruned attribute with corresponding key value pairs
+        # from attribute list
+        for attribute in minimal_policy_list:
+            pruned_attribute_keys[str(attribute)] = attribute_keys[str(attribute)]
+
+        # compute divisor
+        for authority in UASK.keys():
+
+            temp_divisor = 1
+
+            for attribute in minimal_policy_list:
+                x = attribute.getAttributeAndIndex()
+                y = attribute.getAttribute()
+
+                temp_divisor *= ((
+                        pair(CT['C_i'][y], user_keys) *
+                        pair(CT['D_i'][y], pruned_attribute_keys[y]) *
+                        ~pair(CT['C_i_prime'][y], UASK[authority]['K_uid_aid_prime']) *
+                        ~pair(GPP['g'], CT['D_i_prime'][y])
+                ) ** (coefficients[x] * n_a))
+
+            divisor *= temp_divisor
+
+        Token = dividend / divisor
+
+        return (Token, CT['C'])
+
+    def abenc_decrypt(self, CT, TK, user_keys):
+        """
+        Final decryption algorithm to reveal original message. To be run by the user
+
+        :param CT: Original component of ciphertext that contains the encrypted message
+        :param TK: Token generated during partial decryption of ciphertext
+        :param user_keys: User global keys
+        :return: Decrypted message
+        """
+        message = CT / (TK ** user_keys[1])
+        return message
+
+    def abenc_ukeygen(self, GPP, authority, attribute, userObj):
+        pass
+
+    def abenc_skupdate(self, USK, attribute, KUK):
+        pass
+
+    def abenc_ctupdate(self, GPP, CT, attribute, CUK):
+        pass
