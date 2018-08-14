@@ -1,7 +1,6 @@
 """Test suite for file encryption and decrytion"""
 
-import pytest
-from src.abe_schemes.abe_symmetric_file_encryption import *
+from src.abe_symmetric_file_encryption import *
 
 
 def test_verify_file_content():
