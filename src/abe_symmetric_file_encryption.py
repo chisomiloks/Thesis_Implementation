@@ -69,9 +69,7 @@ def decrypt(pwd, msg):
 
 if __name__ == '__main__':
     original_message = b'Sample message to be decrypted'
-    secret_key = b'3:nw2sPUo47KrNHcDRuC5RYsc1XxE0yW2s7WBi9mH+7XVHHW3QfRRhLVYgKzT7LEXLBJExRrZpVy\
-                /XNEWkDYC6EC8RLq69fbsbpc4s1oPAiFAcDULzdg350uf728OSKUAe1lYgeTpycf0z0any7JTEWDahj\
-                xfTfS6iRh4AhEv1qBg='
+    secret_key = b'3:nw2sPUo47KrNHcDRuC5RYsc1XxE0yW2s7WBi9mH+7XVHHW3QfRRhLVYgKzT7LEXLBJExRrZpVy/XNEWkDYC6EC8RLq69fbsbpc4s1oPAiFAcDULzdg350uf728OSKUAe1lYgeTpycf0z0any7JTEWDahjxfTfS6iRh4AhEv1qBg='
 
     ciphertext = encrypt(secret_key, original_message)
     decrypted_message = decrypt(secret_key, ciphertext)
