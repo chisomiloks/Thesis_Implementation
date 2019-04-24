@@ -127,7 +127,7 @@ class OMACPABE(object):
             h = GPP['H'](attribute)
             PK_1_attribute = h ** version_key
             PK_2_attribute = h ** (version_key * SK_aid['gamma_aid'])
-            PK_attribute_aid = (PK_1_attribute, PK_2_attribute)
+            PK_attribute_aid = [PK_1_attribute, PK_2_attribute]
             authority_attributes[attribute] = {
                 'VK': version_key,
                 'PK': PK_attribute_aid
@@ -282,8 +282,7 @@ class OMACPABE(object):
         dividend = 1
 
         for authority in UASK.keys():
-            dividend *= (pair(CT['C_prime'], UASK[authority]['K_uid_aid']) *
-                         ~pair(CT['C_prime_prime'], UASK[authority]['K_uid_aid_prime']))
+            dividend *= (pair(CT['C_prime'], UASK[authority]['K_uid_aid']) * ~pair(CT['C_prime_prime'], UASK[authority]['K_uid_aid_prime']))
 
         # attribute authority index?
         n_a = 1
@@ -340,11 +339,83 @@ class OMACPABE(object):
         message = CT / (TK ** user_keys[1])
         return message
 
-    def abenc_ukeygen(self, GPP, authority, attribute, userObj):
+    def abenc_ukeygen(self, GPP, authority, attribute, user_object):
+        """
+        Generate update keyss used in the revocation process for users and the cloud service provider.
+
+        This will be run by the Attribute Authority.
+
+        :param GPP: Global Public Parameters
+        :param authority: Attribute Authority
+        :param attribute: Attribute to be updated
+        :param user_object: User
+        :return: User attribute update keys and ciphertext update keys
+        """
+
+        ASK, _, authAttrs = authority
+        # attribute version key to be updated
+        old_version_key = authAttrs[attribute]['VK']
+        # set new version key to old value
+        new_version_key = old_version_key
+        # ensure that new version key is different from original version key
+        while old_version_key == new_version_key:
+            new_version_key = self.group.random()
+
+        # update version key of the attribute in the dictionary
+        authAttrs[attribute]['VK'] = new_version_key
+
+        u_uid = user_object['u_uid']
+
+        # create update key for users i.e to update the attribute involved
+        KUK = GPP['H'](attribute) **(ASK['beta_aid'] * (new_version_key - old_version_key) * (u_uid + ASK['gamma_aid']))
+
+        # create update key for ciphertexts encrypted with attribute involved
+        CUK = (new_version_key/old_version_key, (old_version_key - new_version_key)/(old_version_key * ASK['gamma_aid']))
+
+        # update the public parameters of the attribute involved
+        authAttrs[attribute]['PK'][0] = authAttrs[attribute]['PK'][0] ** CUK[0]
+        authAttrs[attribute]['PK'][1] = authAttrs[attribute]['PK'][1] ** CUK[0]
+
+        return {'KUK': KUK, 'CUK': CUK}
+
+        # remove this pass line when testing
         pass
 
     def abenc_skupdate(self, USK, attribute, KUK):
+        """
+        Updates the attribute secret key for the specific attribute.
+
+        This is executed by a non-revoked user.
+
+        :param USK: User secret key
+        :param attribute: Attribute whose secret key is to be updated
+        :param KUK: Update key for users
+        :return: NA
+        """
+
+        # update the secret key component of the affected attribute
+        # print(USK)
+        # print("WHat")
+        USK['AK_uid_aid'][attribute] = USK['AK_uid_aid'][attribute] * KUK
+
+        # remove this pass line when testing
         pass
 
     def abenc_ctupdate(self, GPP, CT, attribute, CUK):
+        """
+        Updates the ciphertexts that contain the specific attribute (revoked attribute).
+
+        This is executed by the cloud service provider.
+
+        :param GPP: Global Public Parameters
+        :param CT: The affected ciphertext
+        :param attribute: Attribute that is affected by the revocation process
+        :param CUK: The Ciphertext Update Key
+        :return: NA
+        """
+        # update the corresponding components of the ciphertext that are related to the affected attribute
+        CT['C_i'][attribute] = CT['C_i'][attribute] * (CT['D_i_prime'][attribute] ** CUK[1])
+        CT['D_i_prime'][attribute] = CT['D_i_prime'][attribute] ** CUK[0]
+
+        # remove this pass line when testing
         pass
