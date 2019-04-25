@@ -154,5 +154,5 @@ venv.bak/
 # mkdocs documentation
 /site
 
-# mypy
-.mypy_cache/
+# ignore .vscode settings file
+.vscode/settings.json
