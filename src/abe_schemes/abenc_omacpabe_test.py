@@ -20,41 +20,28 @@ def basicTest():
     users = {}  # public user data
     authorities = {}
 
-    authorityAttributes1 = ["ONE", "TWO", "THREE", "FOUR", "FIVE"]
-    authorityAttributes2 = ["AB", "AC", "AA", "AD", "AE"]
-    authorityAttributes3 = ["SIX", "SEVEN", "EIGHT", "NINE", "TEN"]
-    authorityAttributes4 = ["EF", "AG", "AH", "AI", "AJ"]
-
     authority1 = "authority1"
     authority2 = "authority2"
     authority3 = "authority3"
     authority4 = "authority4"
 
-    omacpabe.abenc_aareg(GPP, authority1, authorityAttributes1, authorities)
-    omacpabe.abenc_aareg(GPP, authority2, authorityAttributes2, authorities)
-    omacpabe.abenc_aareg(GPP, authority3, authorityAttributes3, authorities)
-    omacpabe.abenc_aareg(GPP, authority4, authorityAttributes4, authorities)
+    authorityAttributes = {authority1: ["ONE", "TWO", "THREE", "FOUR", "FIVE"],
+                           authority2: ["AB", "AC", "AA", "AD", "AE"],
+                           authority3: ["SIX", "SEVEN", "EIGHT", "NINE", "TEN"],
+                           authority4: ["EF", "AG", "AH", "AI", "AJ"]}
 
-    alice = {'id': 'alice', 'authoritySecretKeys': {}, 'authoritySecretKeys1': {}, 'authoritySecretKeys2': {}, 'authoritySecretKeys3': {}, 'authoritySecretKeys4': {}, 'keys': None}
+    for authority in authorityAttributes.keys():
+        omacpabe.abenc_aareg(GPP, authority, authorityAttributes[authority], authorities)
+
+    alice = {'id': 'alice', 'authoritySecretKeys': {}, 'keys': None}
 
     alice['keys'], users[alice['id']] = omacpabe.abenc_userreg(GPP)
 
-    for attr in authorityAttributes1:
-        omacpabe.abenc_keygen(GPP, authorities[authority1], attr, users[alice['id']], alice['authoritySecretKeys1'])
-
-    for attr in authorityAttributes2:
-        omacpabe.abenc_keygen(GPP, authorities[authority2], attr, users[alice['id']], alice['authoritySecretKeys2'])
-
-    for attr in authorityAttributes3:
-        omacpabe.abenc_keygen(GPP, authorities[authority3], attr, users[alice['id']], alice['authoritySecretKeys3'])
-
-    for attr in authorityAttributes4:
-        omacpabe.abenc_keygen(GPP, authorities[authority4], attr, users[alice['id']], alice['authoritySecretKeys4'])
-
-    alice['authoritySecretKeys'][authority1] = alice['authoritySecretKeys1']
-    alice['authoritySecretKeys'][authority2] = alice['authoritySecretKeys2']
-    alice['authoritySecretKeys'][authority3] = alice['authoritySecretKeys3']
-    alice['authoritySecretKeys'][authority4] = alice['authoritySecretKeys4']
+    for authority in authorities.keys():
+        alice['authoritySecretKeys'][authority] = {}
+        for attr in authorityAttributes[authority]:
+            # print(attr)
+            omacpabe.abenc_keygen(GPP, authorities[authority], attr, users[alice['id']], alice['authoritySecretKeys'][authority])
 
     k = group_object.random(GT)
 
@@ -66,6 +53,7 @@ def basicTest():
     policy_str = '((THREE and TWO and SEVEN or EIGHT and FIVE and ONE and NINE and TEN) and \
                 (AB and AC and AA and AD and AE and EF and AG and AH and AI and AJ))'
 
+    # attempt at benchmarking
     # for i in range(1):
     #    start = clock()
     #    CT = omacpabe.abenc_encrypt(GPP, policy_str, k, authorities)
@@ -85,10 +73,6 @@ def basicTest():
 
     print("the decryption time is ", t1_d)
 
-    # print "CT", CT['C']
-    # print "k", k
-    # print "PT", PT
-
     assert k == PT, 'FAILED DECRYPTION!'
     print('SUCCESSFUL DECRYPTION')
 
@@ -106,54 +90,32 @@ def revokedTest():
     users = {}  # public user data
     authorities = {}
 
-    authorityAttributes1 = ["ONE", "TWO", "THREE", "FOUR", "FIVE"]
-    authorityAttributes2 = ["AB", "AC", "AA", "AD", "AE"]
-    authorityAttributes3 = ["SIX", "SEVEN", "EIGHT", "NINE", "TEN"]
-    authorityAttributes4 = ["EF", "AG", "AH", "AI", "AJ"]
-
     authority1 = "authority1"
     authority2 = "authority2"
     authority3 = "authority3"
     authority4 = "authority4"
 
-    omacpabe.abenc_aareg(GPP, authority1, authorityAttributes1, authorities)
-    omacpabe.abenc_aareg(GPP, authority2, authorityAttributes2, authorities)
-    omacpabe.abenc_aareg(GPP, authority3, authorityAttributes3, authorities)
-    omacpabe.abenc_aareg(GPP, authority4, authorityAttributes4, authorities)
+    authorityAttributes = {authority1: ["ONE", "TWO", "THREE", "FOUR", "FIVE"],
+                           authority2: ["AB", "AC", "AA", "AD", "AE"],
+                           authority3: ["SIX", "SEVEN", "EIGHT", "NINE", "TEN"],
+                           authority4: ["EF", "AG", "AH", "AI", "AJ"]}
 
-    alice = {'id': 'alice', 'authoritySecretKeys': {}, 'authoritySecretKeys1': {},
-             'authoritySecretKeys2': {}, 'authoritySecretKeys3': {}, 'authoritySecretKeys4': {}, 'keys': None}
-    bob = {'id': 'bob', 'authoritySecretKeys': {}, 'authoritySecretKeys3': {}, 'authoritySecretKeys4': {}, 'authoritySecretKeys1': {},
-           'authoritySecretKeys2': {}, 'keys': None}
+    for authority in authorityAttributes.keys():
+        omacpabe.abenc_aareg(GPP, authority, authorityAttributes[authority], authorities)
+
+
+    alice = {'id': 'alice', 'authoritySecretKeys': {}, 'keys': None}
+    bob = {'id': 'bob', 'authoritySecretKeys': {}, 'keys': None}
 
     alice['keys'], users[alice['id']] = omacpabe.abenc_userreg(GPP)
     bob['keys'], users[bob['id']] = omacpabe.abenc_userreg(GPP)
 
-    for attr in authorityAttributes1:
-        omacpabe.abenc_keygen(GPP, authorities[authority1], attr, users[alice['id']], alice['authoritySecretKeys1'])
-        omacpabe.abenc_keygen(GPP, authorities[authority1], attr, users[bob['id']], bob['authoritySecretKeys1'])
-
-    for attr in authorityAttributes2:
-        omacpabe.abenc_keygen(GPP, authorities[authority2], attr, users[alice['id']], alice['authoritySecretKeys2'])
-        omacpabe.abenc_keygen(GPP, authorities[authority2], attr, users[bob['id']], bob['authoritySecretKeys2'])
-
-    for attr in authorityAttributes3:
-        omacpabe.abenc_keygen(GPP, authorities[authority3], attr, users[alice['id']], alice['authoritySecretKeys3'])
-        omacpabe.abenc_keygen(GPP, authorities[authority3], attr, users[bob['id']], bob['authoritySecretKeys3'])
-
-    for attr in authorityAttributes4:
-        omacpabe.abenc_keygen(GPP, authorities[authority4], attr, users[alice['id']], alice['authoritySecretKeys4'])
-        omacpabe.abenc_keygen(GPP, authorities[authority4], attr, users[bob['id']], bob['authoritySecretKeys4'])
-
-    alice['authoritySecretKeys'][authority1] = alice['authoritySecretKeys1']
-    alice['authoritySecretKeys'][authority2] = alice['authoritySecretKeys2']
-    alice['authoritySecretKeys'][authority3] = alice['authoritySecretKeys3']
-    alice['authoritySecretKeys'][authority4] = alice['authoritySecretKeys4']
-
-    bob['authoritySecretKeys'][authority1] = bob['authoritySecretKeys1']
-    bob['authoritySecretKeys'][authority2] = bob['authoritySecretKeys2']
-    bob['authoritySecretKeys'][authority3] = bob['authoritySecretKeys3']
-    bob['authoritySecretKeys'][authority4] = bob['authoritySecretKeys4']
+    for authority in authorities.keys():
+        alice['authoritySecretKeys'][authority] = {}
+        bob['authoritySecretKeys'][authority] = {}
+        for attr in authorityAttributes[authority]:
+            omacpabe.abenc_keygen(GPP, authorities[authority], attr, users[alice['id']], alice['authoritySecretKeys'][authority])
+            omacpabe.abenc_keygen(GPP, authorities[authority], attr, users[bob['id']], bob['authoritySecretKeys'][authority])
 
     k = group_object.random(GT)
 
@@ -183,15 +145,6 @@ def revokedTest():
 
     PT2a = omacpabe.abenc_decrypt(C2a, TK2a, alice['keys'])
     PT2b = omacpabe.abenc_decrypt(C2b, TK2b, bob['keys'])
-
-
-    # PT2a = omacpabe.abenc_decrypt(GPP, CT, alice['authoritySecretKeys'], alice['keys'])
-    # PT2b = omacpabe.abenc_decrypt(GPP, CT, bob['authoritySecretKeys'], bob['keys'])
-
-
-    # print "k", k
-    # print "PT2a", PT2a
-    # print "PT2b", PT2b
 
     assert k == PT2a, 'FAILED DECRYPTION (2a)!'
     assert k != PT2b, 'SUCCESSFUL DECRYPTION (2b)!'
