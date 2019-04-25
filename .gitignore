@@ -4,6 +4,7 @@ src/abe_schemes/other_abe_schemes/
 xml_module/
 tests/.pytest_cache/
 tests/.pytest_cache/v/cache
+.vscode/
 
 # ignore __init__.py file
 __init__.py
