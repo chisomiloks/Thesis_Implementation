@@ -5,6 +5,7 @@ xml_module/
 tests/.pytest_cache/
 tests/.pytest_cache/v/cache
 .vscode/
+src/test_files/
 
 # ignore __init__.py file
 __init__.py
