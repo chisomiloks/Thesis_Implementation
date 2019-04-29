@@ -100,7 +100,7 @@ def file_decrypt(input_file, pwd, output_file = None):
     :return: NA
     """
     if output_file is None:
-        output_file = "decrypted_file.txt"
+        output_file = "test_files/decrypted_file.txt"
     with open(input_file, "rb") as newfile:
         data = newfile.read()
         dec_data_temp = decrypt(secret_key, data)
@@ -172,13 +172,13 @@ if __name__ == '__main__':
     # symmetric key generation
     secret_key = symmetric_key_gen()
     # symmetric file encryption
-    file_encrypt("data.txt", secret_key)
+    file_encrypt("test_files/data.txt", secret_key)
     # symmetric file decryption
-    file_decrypt("data.txt_enc", secret_key)
+    file_decrypt("test_files/data.txt_enc", secret_key)
 
 
     # assert original_message == decrypted_message, "FAILED!!!"  # expected == actual
-    assert filecmp.cmp("data.txt", "decrypted_file.txt"), "FAILED!!!!"
+    assert filecmp.cmp("test_files/data.txt", "test_files/decrypted_file.txt"), "FAILED!!!!"
     print("SUCCESSFUL DECRYPTION")
 
     # test abe implementation
