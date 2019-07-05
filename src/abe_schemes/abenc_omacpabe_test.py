@@ -1,15 +1,21 @@
 from src.abe_schemes.abenc_omacpabe import OMACPABE
 from charm.toolbox.pairinggroup import PairingGroup
 from charm.toolbox.pairinggroup import GT
+from src.policy_generator import generate_policy_string as gp
 from time import clock
+import numpy as np
 
-
-def basicTest():
+def basicTest(n_trials, n_att_authorities, n_attributes):
     """
 
+    :param n_trials: Number of times to run the function and calculate the average
+    :param n_att_authorities: Number of attribute authorities
+    :param n_attributes: Number of attributes
     :return:
     """
     print("RUN basicTest")
+
+    # scheme setup
     group_object = PairingGroup('SS512')
     omacpabe = OMACPABE(group_object)
     GPP, GMK = omacpabe.abenc_casetup()
@@ -20,27 +26,36 @@ def basicTest():
     users = {}  # public user data
     authorities = {}
 
-    authority1 = "authority1"
-    authority2 = "authority2"
-    authority3 = "authority3"
-    authority4 = "authority4"
+    # charles ideas
+    # n_authorities = n_att_authorities
+    # n_authority_attr = n_attributes
+    authority_names = []
+    authorityAttributes = {}
+    attribute_master = []
 
-    authorityAttributes = {authority1: ["ONE", "TWO", "THREE", "FOUR", "FIVE"],
-                           authority2: ["AB", "AC", "AA", "AD", "AE"],
-                           authority3: ["SIX", "SEVEN", "EIGHT", "NINE", "TEN"],
-                           authority4: ["EF", "AG", "AH", "AI", "AJ"]}
+    seed_attributes = [i + 1 for i in range(n_attributes)]
+
+    for i in range(n_att_authorities):
+        authority_name = "AUTHORITY" + str(i + 1)
+        authority_names.append(authority_name)
+
+        current_auth_attributes = []
+        for seed_attr in seed_attributes:
+            authority_attribute = authority_name + "." + str(seed_attr)
+            current_auth_attributes.append(authority_attribute)
+
+        authorityAttributes[authority_name] = current_auth_attributes
+        attribute_master += current_auth_attributes
 
     for authority in authorityAttributes.keys():
         omacpabe.abenc_aareg(GPP, authority, authorityAttributes[authority], authorities)
 
     alice = {'id': 'alice', 'authoritySecretKeys': {}, 'keys': None}
-
     alice['keys'], users[alice['id']] = omacpabe.abenc_userreg(GPP)
 
     for authority in authorities.keys():
         alice['authoritySecretKeys'][authority] = {}
         for attr in authorityAttributes[authority]:
-            # print(attr)
             omacpabe.abenc_keygen(GPP, authorities[authority], attr, users[alice['id']], alice['authoritySecretKeys'][authority])
 
     k = group_object.random(GT)
@@ -50,31 +65,37 @@ def basicTest():
     assert isinstance(q, object)
     obj = group_object.deserialize(q)
 
-    policy_str = '((THREE and TWO and SEVEN or EIGHT and FIVE and ONE and NINE and TEN) and \
-                (AB and AC and AA and AD and AE and EF and AG and AH and AI and AJ))'
+    # policy_str = '((AUTHORITY3.9 and AUTHORITY9.2 and AUTHORITY5.2 or AUTHORITY9.4 or AUTHORITY2.2 or AUTHORITY6.2 or AUTHORITY2.3 or AUTHORITY1.10 or AUTHORITY10.4 and AUTHORITY10.5 or AUTHORITY10.2 or AUTHORITY1.9 and AUTHORITY4.10))'
+
+    policy_str = gp(attribute_master, n_attributes)
 
     # attempt at benchmarking
-    # for i in range(1):
-    #    start = clock()
-    #    CT = omacpabe.abenc_encrypt(GPP, policy_str, k, authorities)
-    #    t1_e += clock() - start
+    t1_enc_list = []
+    for i in range(n_trials):
+        start = clock()
+        CT = omacpabe.abenc_encrypt(GPP, policy_str, k, authorities)
+        t1_e = clock() - start
+        t1_enc_list.append(t1_e)
 
-    start = clock()
-    CT = omacpabe.abenc_encrypt(GPP, policy_str, k, authorities)
-    t1_e += clock() - start
-
-    print("the encryption time is ", t1_e)
+    avg_encryption_time = sum(t1_enc_list) / len(t1_enc_list)
+    # print("average encryption time = ", avg_encryption_time)
 
     TK, C = omacpabe.abenc_generatetoken(GPP, CT, alice['authoritySecretKeys'], alice['keys'][0])
 
-    start = clock()
-    PT = omacpabe.abenc_decrypt(C, TK, alice['keys'])
-    t1_d += clock() - start
+    t1_dec_list = []
+    for i in range(n_trials):
+        start = clock()
+        PT = omacpabe.abenc_decrypt(C, TK, alice['keys'])
+        t1_d = clock() - start
+        t1_dec_list.append(t1_d)
 
-    print("the decryption time is ", t1_d)
+    avg_decryption_time = sum(t1_dec_list) / len(t1_dec_list)
+    # print("average decryption time = ", avg_decryption_time)
 
     assert k == PT, 'FAILED DECRYPTION!'
     print('SUCCESSFUL DECRYPTION')
+
+    return avg_encryption_time, avg_decryption_time
 
 
 def revokedTest():
@@ -90,15 +111,26 @@ def revokedTest():
     users = {}  # public user data
     authorities = {}
 
-    authority1 = "authority1"
-    authority2 = "authority2"
-    authority3 = "authority3"
-    authority4 = "authority4"
+    n_authorities = 4
+    n_authority_attr = 5
+    authority_names = []
+    authorityAttributes = {}
+    attribute_master = []
 
-    authorityAttributes = {authority1: ["ONE", "TWO", "THREE", "FOUR", "FIVE"],
-                           authority2: ["AB", "AC", "AA", "AD", "AE"],
-                           authority3: ["SIX", "SEVEN", "EIGHT", "NINE", "TEN"],
-                           authority4: ["EF", "AG", "AH", "AI", "AJ"]}
+    seed_attributes = [i + 1 for i in range(n_authority_attr)]
+
+    for i in range(n_authorities):
+        authority_name = "AUTHORITY" + str(i + 1)
+        authority_names.append(authority_name)
+
+        current_auth_attributes = []
+        for seed_attr in seed_attributes:
+            authority_attribute = authority_name + "." + str(seed_attr)
+            # authority_attribute = authority_name + str(seed_attr)
+            current_auth_attributes.append(authority_attribute)
+
+        authorityAttributes[authority_name] = current_auth_attributes
+        attribute_master += current_auth_attributes
 
     for authority in authorityAttributes.keys():
         omacpabe.abenc_aareg(GPP, authority, authorityAttributes[authority], authorities)
@@ -119,9 +151,7 @@ def revokedTest():
 
     k = group_object.random(GT)
 
-    policy_str = '((THREE and TWO and SEVEN or EIGHT and FIVE and ONE and NINE and TEN) and \
-                 (AB and AC and AA and AD and AE and EF and AG and AH and AI and AJ))'
-
+    policy_str = '((AUTHORITY1.1 or AUTHORITY2.1 or AUTHORITY3.1 or AUTHORITY4.1))'
     CT = omacpabe.abenc_encrypt(GPP, policy_str, k, authorities)
 
     TK1a, C1a = omacpabe.abenc_generatetoken(GPP, CT, alice['authoritySecretKeys'], alice['keys'][0])
@@ -135,9 +165,9 @@ def revokedTest():
     print('SUCCESSFUL DECRYPTION 1')
 
     # revoke bob on "ONE"
-    attribute = "ONE"
-    UK = omacpabe.abenc_ukeygen(GPP, authorities[authority1], attribute, users[alice['id']])
-    omacpabe.abenc_skupdate(alice['authoritySecretKeys'][authority1], attribute, UK['KUK'])
+    attribute = "AUTHORITY1.1"
+    UK = omacpabe.abenc_ukeygen(GPP, authorities['AUTHORITY1'], attribute, users[alice['id']])
+    omacpabe.abenc_skupdate(alice['authoritySecretKeys']['AUTHORITY1'], attribute, UK['KUK'])
     omacpabe.abenc_ctupdate(GPP, CT, attribute, UK['CUK'])
 
     TK2a, C2a = omacpabe.abenc_generatetoken(GPP, CT, alice['authoritySecretKeys'], alice['keys'][0])
@@ -152,5 +182,27 @@ def revokedTest():
 
 
 if __name__ == '__main__':
-    basicTest()
-    revokedTest()
+    # basicTest(n_trials, n_att_authorities, n_attributes)
+    n_trials = 100
+    n_att_authorities = [5, 10, 15, 20, 25]
+    n_attributes = [5, 10, 15, 20, 25]
+
+    enc_time_att_authorities = []
+    dec_time_att_authorities = []
+
+    for n_attauth in n_att_authorities:
+        enc_time, dec_time = basicTest(n_trials, n_attauth, n_attauth * 10)
+        enc_time_att_authorities.append(enc_time)
+        dec_time_att_authorities.append(dec_time)
+
+
+    print(enc_time_att_authorities)
+    print(dec_time_att_authorities)
+
+    # combine lists and convert to numpy array
+    enc_dec_times = np.array([enc_time_att_authorities, dec_time_att_authorities]).transpose()
+    # save as npy file
+    np.save('thesis_sample_data', enc_dec_times)
+
+    # basicTest(20,10,10)
+    # revokedTest()
