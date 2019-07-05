@@ -22,8 +22,6 @@ from charm.toolbox.pairinggroup import G1
 from charm.toolbox.pairinggroup import pair
 from charm.toolbox.secretutil import SecretUtil
 
-# from time import clock
-
 
 class OMACPABE(object):
     def __init__(self, group_object):
@@ -52,10 +50,16 @@ class OMACPABE(object):
         g_b = g ** b
 
         # Global Public Parameters (GPP) = g, g_a, g_b, H
-        GPP = {'g': g, 'g_a': g_a, 'g_b': g_b, 'H': H}
+        GPP = {'g': g,
+               'g_a': g_a,
+               'g_b': g_b,
+               'H': H,
+               }
 
         # Global Master Key (GMK) = a, b
-        GMK = {'a': a, 'b': b}
+        GMK = {'a': a,
+               'b': b,
+               }
 
         return (GPP, GMK)
 
@@ -86,7 +90,10 @@ class OMACPABE(object):
         GSK_uid = u_uid
         GPK_uid_prime = g_u_uid_prime
 
-        return (GPK_uid, GSK_uid_prime), {'GSK_uid': GSK_uid, 'GPK_uid_prime': GPK_uid_prime, 'u_uid': u_uid}
+        return (GPK_uid, GSK_uid_prime), {'GSK_uid': GSK_uid,
+                                          'GPK_uid_prime': GPK_uid_prime,
+                                          'u_uid': u_uid,
+                                          }
 
     def abenc_aareg(self, GPP, authority_id, attributes, registered_authorities):
         """
@@ -104,13 +111,15 @@ class OMACPABE(object):
             beta_aid = self.group.random(ZR)
             gamma_aid = self.group.random(ZR)
             # attribute authority secret key values
-            SK_aid = {'alpha_aid': alpha_aid, 'beta_aid': beta_aid, 'gamma_aid': gamma_aid}
+            SK_aid = {'alpha_aid': alpha_aid,
+                      'beta_aid': beta_aid,
+                      'gamma_aid': gamma_aid
+                      }
             # attribute authority public key values
-            PK_aid = {
-                'e_alpha': pair(GPP['g'], GPP['g']) ** alpha_aid,
-                'g_beta_aid': GPP['g'] ** beta_aid,
-                'g_beta_aid_inv': GPP['g'] ** (1 / beta_aid)
-            }
+            PK_aid = {'e_alpha': pair(GPP['g'], GPP['g']) ** alpha_aid,
+                      'g_beta_aid': GPP['g'] ** beta_aid,
+                      'g_beta_aid_inv': GPP['g'] ** (1 / beta_aid),
+                      }
             authority_attributes = {}
             registered_authorities[authority_id] = (SK_aid, PK_aid, authority_attributes)
         else:
@@ -128,10 +137,9 @@ class OMACPABE(object):
             PK_1_attribute = h ** version_key
             PK_2_attribute = h ** (version_key * SK_aid['gamma_aid'])
             PK_attribute_aid = [PK_1_attribute, PK_2_attribute]
-            authority_attributes[attribute] = {
-                'VK': version_key,
-                'PK': PK_attribute_aid
-            }
+            authority_attributes[attribute] = {'VK': version_key,
+                                               'PK': PK_attribute_aid,
+                                               }
         return (SK_aid, PK_aid, authority_attributes)
 
     def abenc_keygen(self, GPP, authority, attribute, user_object, USK=None):
@@ -165,7 +173,7 @@ class OMACPABE(object):
 
         # generate attribute specific secret key parameters
         AK_uid_aid = (GPP['g'] ** (t * ASK['beta_aid'])) * authority_attrs[attribute]['PK'][0] \
-                     ** (ASK['beta_aid'] * (u['u_uid'] + ASK['gamma_aid']))
+            ** (ASK['beta_aid'] * (u['u_uid'] + ASK['gamma_aid']))
         USK['AK_uid_aid'][attribute] = AK_uid_aid
 
         return USK
@@ -272,7 +280,9 @@ class OMACPABE(object):
         # returns False if user fails policy assessment
         minimal_policy_list = self.util.prune(encryption_policy, user_attributes)
 
-        # this is an error handling implementation tht should be fixed later
+        # print(minimal_policy_list)
+
+        # this is an error handling implementation that should be fixed later
         if not minimal_policy_list:
             return False
 
@@ -367,7 +377,7 @@ class OMACPABE(object):
         u_uid = user_object['u_uid']
 
         # create update key for users i.e to update the attribute involved
-        KUK = GPP['H'](attribute) **(ASK['beta_aid'] * (new_version_key - old_version_key) * (u_uid + ASK['gamma_aid']))
+        KUK = GPP['H'](attribute) ** (ASK['beta_aid'] * (new_version_key - old_version_key) * (u_uid + ASK['gamma_aid']))
 
         # create update key for ciphertexts encrypted with attribute involved
         CUK = (new_version_key/old_version_key, (old_version_key - new_version_key)/(old_version_key * ASK['gamma_aid']))
@@ -376,10 +386,9 @@ class OMACPABE(object):
         authAttrs[attribute]['PK'][0] = authAttrs[attribute]['PK'][0] ** CUK[0]
         authAttrs[attribute]['PK'][1] = authAttrs[attribute]['PK'][1] ** CUK[0]
 
-        return {'KUK': KUK, 'CUK': CUK}
-
-        # remove this pass line when testing
-        pass
+        return {'KUK': KUK,
+                'CUK': CUK,
+                }
 
     def abenc_skupdate(self, USK, attribute, KUK):
         """
@@ -395,11 +404,7 @@ class OMACPABE(object):
 
         # update the secret key component of the affected attribute
         # print(USK)
-        # print("WHat")
         USK['AK_uid_aid'][attribute] = USK['AK_uid_aid'][attribute] * KUK
-
-        # remove this pass line when testing
-        pass
 
     def abenc_ctupdate(self, GPP, CT, attribute, CUK):
         """
@@ -416,6 +421,3 @@ class OMACPABE(object):
         # update the corresponding components of the ciphertext that are related to the affected attribute
         CT['C_i'][attribute] = CT['C_i'][attribute] * (CT['D_i_prime'][attribute] ** CUK[1])
         CT['D_i_prime'][attribute] = CT['D_i_prime'][attribute] ** CUK[0]
-
-        # remove this pass line when testing
-        pass
