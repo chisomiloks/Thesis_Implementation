@@ -351,7 +351,7 @@ class OMACPABE(object):
 
     def abenc_ukeygen(self, GPP, authority, attribute, user_object):
         """
-        Generate update keyss used in the revocation process for users and the cloud service provider.
+        Generate update keys used in the revocation process for users and the cloud service provider.
 
         This will be run by the Attribute Authority.
 
@@ -382,8 +382,7 @@ class OMACPABE(object):
         # create update key for ciphertexts encrypted with attribute involved
         CUK = (new_version_key/old_version_key, (old_version_key - new_version_key)/(old_version_key * ASK['gamma_aid']))
 
-        # update the public parameters of the attribute involved
-        authAttrs[attribute]['PK'][0] = authAttrs[attribute]['PK'][0] ** CUK[0]
+        # update the public parameters of the attribute involvedauthAttrs[attribute]['PK'][0] = authAttrs[attribute]['PK'][0] ** CUK[0]
         authAttrs[attribute]['PK'][1] = authAttrs[attribute]['PK'][1] ** CUK[0]
 
         return {'KUK': KUK,
