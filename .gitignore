@@ -157,3 +157,6 @@ venv.bak/
 
 # ignore .vscode settings file
 .vscode/settings.json
+
+# MAC Files
+.DS_Store
