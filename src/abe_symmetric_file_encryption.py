@@ -13,6 +13,7 @@ from charm.toolbox.pairinggroup import GT
 from src.abe_schemes.abenc_omacpabe import OMACPABE
 from time import clock
 import filecmp
+import numpy as np
 
 
 # generate symmetric key from random pairing element
@@ -100,7 +101,7 @@ def file_decrypt(input_file, pwd, output_file = None):
     :return: NA
     """
     if output_file is None:
-        output_file = "test_files/decrypted_file.txt"
+        output_file = "/home/munachisoilokah/decrypted_file.txt"
     with open(input_file, "rb") as newfile:
         data = newfile.read()
         dec_data_temp = decrypt(secret_key, data)
@@ -108,79 +109,32 @@ def file_decrypt(input_file, pwd, output_file = None):
         with open(output_file, "wb") as decfile:
             decfile.write(dec_data_temp)
 
-
-def abe_test(abe_element):
-    """
-
-    :return:
-    """
-    print("RUN basicTest")
-    group_object = PairingGroup('SS512')
-    omacpabe = OMACPABE(group_object)
-    GPP, GMK = omacpabe.abenc_casetup()
-
-    t1_e = 0
-    t1_d = 0
-
-    users = {}  # public user data
-    authorities = {}
-
-    authority1 = "authority1"
-    authority2 = "authority2"
-    authority3 = "authority3"
-    authority4 = "authority4"
-
-    authorityAttributes = {authority1: ["ONE", "TWO", "THREE", "FOUR", "FIVE"],
-                           authority2: ["AB", "AC", "AA", "AD", "AE"],
-                           authority3: ["SIX", "SEVEN", "EIGHT", "NINE", "TEN"],
-                           authority4: ["EF", "AG", "AH", "AI", "AJ"]}
-
-    for authority in authorityAttributes.keys():
-        omacpabe.abenc_aareg(GPP, authority, authorityAttributes[authority], authorities)
-
-    alice = {'id': 'alice', 'authoritySecretKeys': {}, 'keys': None}
-
-    alice['keys'], users[alice['id']] = omacpabe.abenc_userreg(GPP)
-
-    for authority in authorities.keys():
-        alice['authoritySecretKeys'][authority] = {}
-        for attr in authorityAttributes[authority]:
-            omacpabe.abenc_keygen(GPP, authorities[authority], attr, users[alice['id']], alice['authoritySecretKeys'][authority])
-
-    policy_str = '((THREE and TWO and SEVEN or EIGHT and FIVE and ONE and NINE and TEN) and \
-                (AB and AC and AA and AD and AE and EF and AG and AH and AI and AJ))'
-
-    start = clock()
-    CT = omacpabe.abenc_encrypt(GPP, policy_str, abe_element, authorities)
-    t1_e += clock() - start
-
-    print("the encryption time is ", t1_e)
-
-    TK, C = omacpabe.abenc_generatetoken(GPP, CT, alice['authoritySecretKeys'], alice['keys'][0])
-
-    start = clock()
-    PT = omacpabe.abenc_decrypt(C, TK, alice['keys'])
-    t1_d += clock() - start
-
-    print("the decryption time is ", t1_d)
-
-    assert abe_element == PT, 'FAILED DECRYPTION!'
-    print('SUCCESSFUL DECRYPTION')
+# def generate_policy_string(attribute_master, n_attr):
+#     policy_str = ''
+#     OPS = ['and', 'or']
+#     attr_indices = np.random.randint(0, len(attribute_master), n_attr)
+#     for attr_index in attr_indices:
+#         attribute = attribute_master[attr_index]
+#         op_idx = int(np.random.randint(0, len(OPS), 1))
+#         policy_str += attribute + " " + OPS[op_idx] + " "
+#
+#     print('policy before: ', policy_str)
+#     policy_str = "(" + policy_str[:-4].strip() + ")"
+#
+#     print('policy after: ', policy_str)
 
 
 if __name__ == '__main__':
     # symmetric key generation
     secret_key = symmetric_key_gen()
     # symmetric file encryption
-    file_encrypt("test_files/data.txt", secret_key)
+    file_encrypt("/home/munachisoilokah/nonsense.txt", secret_key)
     # symmetric file decryption
-    file_decrypt("test_files/data.txt_enc", secret_key)
-
+    file_decrypt("/home/munachisoilokah/nonsense.txt_enc", secret_key)
 
     # assert original_message == decrypted_message, "FAILED!!!"  # expected == actual
-    assert filecmp.cmp("test_files/data.txt", "test_files/decrypted_file.txt"), "FAILED!!!!"
+    assert filecmp.cmp("/home/munachisoilokah/nonsense.txt", "/home/munachisoilokah/decrypted_file.txt"), "FAILED!!!!"
     print("SUCCESSFUL DECRYPTION")
 
     # test abe implementation
     abe_key = abe_key_extract(secret_key)
-    abe_test(abe_key)
