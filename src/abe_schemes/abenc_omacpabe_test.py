@@ -13,7 +13,7 @@ def basicTest(n_trials, n_att_authorities, n_attributes):
     :param n_attributes: Number of attributes
     :return:
     """
-    print("RUN basicTest")
+    # print("RUN basicTest")
 
     # scheme setup
     group_object = PairingGroup('SS512')
@@ -106,7 +106,7 @@ def revokedTest(n_trials, n_att_authorities, n_attributes):
     :param n_attributes:
     :return:
     """
-    print("RUN revokedTest")
+    # print("RUN revokedTest")
 
     # scheme setup
     group_object = PairingGroup('SS512')
@@ -171,11 +171,15 @@ def revokedTest(n_trials, n_att_authorities, n_attributes):
 
     assert k == PT1a, 'FAILED DECRYPTION (1a)!'
     assert k == PT1b, 'FAILED DECRYPTION (1b)!'
-    print('SUCCESSFUL DECRYPTION 1')
+    # print('SUCCESSFUL DECRYPTION 1')
 
     # revoke bob on an attribute
     attribute = policy_str.split()[0][1:]
-    revocation_authority = policy_str.split()[0][1:-2]
+    # revocation_authority = policy_str.split()[0][1:-2]
+    # temp = attribute.split(".")
+    revocation_authority = attribute.split(".")[0]
+    # print(attribute)
+    # print(revocation_authority)
 
     t1_rev_list = []
     for i in range(n_trials):
@@ -187,7 +191,7 @@ def revokedTest(n_trials, n_att_authorities, n_attributes):
         t1_rev_list.append(t1_rev)
 
     avg_revocation_time = sum(t1_rev_list) / len(t1_rev_list)
-    print("average revocation time = ", avg_revocation_time)
+    # print("average revocation time = ", avg_revocation_time)
 
     TK2a, C2a = omacpabe.abenc_generatetoken(GPP, CT, alice['authoritySecretKeys'], alice['keys'][0])
     TK2b, C2b = omacpabe.abenc_generatetoken(GPP, CT, bob['authoritySecretKeys'], bob['keys'][0])
@@ -197,26 +201,31 @@ def revokedTest(n_trials, n_att_authorities, n_attributes):
 
     assert k == PT2a, 'FAILED DECRYPTION (2a)!'
     assert k != PT2b, 'SUCCESSFUL DECRYPTION (2b)!'
-    print('SUCCESSFUL DECRYPTION 2')
+    # print('SUCCESSFUL DECRYPTION 2')
+    return avg_revocation_time
 
 
 if __name__ == '__main__':
     # basicTest(n_trials, n_att_authorities, n_attributes)
     n_trials = 1
     # n_att_authorities = [5, 10, 15, 20, 25]
-    n_att_authorities = [3]
+    n_att_authorities = [1, 2, 3, 4, 5]
 
     enc_time_att_authorities = []
     dec_time_att_authorities = []
+    rev_time_att_authorities = []
 
     for n_attauth in n_att_authorities:
         enc_time, dec_time = basicTest(n_trials, n_attauth, 15)
+        rev_time = revokedTest(n_trials, n_attauth, 15)
+
         enc_time_att_authorities.append(enc_time)
         dec_time_att_authorities.append(dec_time)
+        rev_time_att_authorities.append(rev_time)
 
-
-    print(enc_time_att_authorities)
-    print(dec_time_att_authorities)
+    print("encryption times", enc_time_att_authorities)
+    print("decryption times", dec_time_att_authorities)
+    print("revocation times", rev_time_att_authorities)
 
     # combine lists and convert to numpy array
     enc_dec_times = np.array([enc_time_att_authorities, dec_time_att_authorities]).transpose()
