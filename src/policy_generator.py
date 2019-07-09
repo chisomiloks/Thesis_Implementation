@@ -1,5 +1,6 @@
 import numpy as np
 
+
 # charles idea
 # generate policy containing at least n_attr number of attributes
 def generate_policy_string(attribute_master, n_attr):
