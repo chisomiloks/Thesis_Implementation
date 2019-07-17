@@ -20,37 +20,32 @@ def basicTest(n_trials, n_att_authorities, n_attributes):
     omacpabe = OMACPABE(group_object)
     GPP, GMK = omacpabe.abenc_casetup()
 
-    t1_e = 0
-    t1_d = 0
-
     users = {}  # public user data
-    authorities = {}
+    authorities = {}  # authority data dictionary
 
-    # charles ideas
-    # n_authorities = n_att_authorities
-    # n_authority_attr = n_attributes
-    authority_names = []
-    authorityAttributes = {}
-    attribute_master = []
+    authority_names = []  # list of attribute authorities
+    authorityAttributes = {}  # dictionary of attributes and the matching authorities
+    attribute_master = []  # master list of all possible attributes
 
-    seed_attributes = [i + 1 for i in range(n_attributes)]
+    seed_attributes = [i + 1 for i in range(n_attributes)]  # list comprehension to generate number list to aid in generation of attributes
 
     for i in range(n_att_authorities):
-        authority_name = "AUTHORITY" + str(i + 1)
-        authority_names.append(authority_name)
+        authority_name = "AUTHORITY" + str(i + 1)  # create attribute authorities
+        authority_names.append(authority_name)  # add new authorities to overall list
 
-        current_auth_attributes = []
+        current_auth_attributes = []  # attributes for current authority
         for seed_attr in seed_attributes:
-            authority_attribute = authority_name + "." + str(seed_attr)
-            current_auth_attributes.append(authority_attribute)
+            authority_attribute = authority_name + "." + str(seed_attr)  # create attribute
+            current_auth_attributes.append(authority_attribute)  # add attribute to authority attribute list
 
-        authorityAttributes[authority_name] = current_auth_attributes
-        attribute_master += current_auth_attributes
+        authorityAttributes[authority_name] = current_auth_attributes  # add authority as key and its attributes as value to the dictionary
+        attribute_master += current_auth_attributes  # add attributes created to master attribute list
 
     for authority in authorityAttributes.keys():
         omacpabe.abenc_aareg(GPP, authority, authorityAttributes[authority], authorities)
 
-    alice = {'id': 'alice', 'authoritySecretKeys': {}, 'keys': None}
+    alice = {'id': 'alice', 'authoritySecretKeys': {}, 'keys': None}  # new user alice
+
     alice['keys'], users[alice['id']] = omacpabe.abenc_userreg(GPP)
 
     for authority in authorities.keys():
@@ -64,13 +59,12 @@ def basicTest(n_trials, n_att_authorities, n_attributes):
     q = group_object.serialize(k)
     assert isinstance(q, object)
     obj = group_object.deserialize(q)
+    assert obj == k, 'SERIALIZATION ERROR!'
 
-    # policy_str = '((AUTHORITY3.9 and AUTHORITY9.2 and AUTHORITY5.2 or AUTHORITY9.4 or AUTHORITY2.2 or AUTHORITY6.2 or AUTHORITY2.3 or AUTHORITY1.10 or AUTHORITY10.4 and AUTHORITY10.5 or AUTHORITY10.2 or AUTHORITY1.9 and AUTHORITY4.10))'
+    policy_str = gp(attribute_master, n_attributes)  # generate policy
 
-    policy_str = gp(attribute_master, n_attributes)
-
-    # attempt at benchmarking
-    t1_enc_list = []
+    # benchmarking
+    t1_enc_list = []  # list to hold encryption times for multiple iterations
     for i in range(n_trials):
         start = clock()
         CT = omacpabe.abenc_encrypt(GPP, policy_str, k, authorities)
@@ -82,7 +76,7 @@ def basicTest(n_trials, n_att_authorities, n_attributes):
 
     TK, C = omacpabe.abenc_generatetoken(GPP, CT, alice['authoritySecretKeys'], alice['keys'][0])
 
-    t1_dec_list = []
+    t1_dec_list = []  # list to hold decryption times for multiple iterations
     for i in range(n_trials):
         start = clock()
         PT = omacpabe.abenc_decrypt(C, TK, alice['keys'])
@@ -113,38 +107,32 @@ def revokedTest(n_trials, n_att_authorities, n_attributes):
     omacpabe = OMACPABE(group_object)
     GPP, GMK = omacpabe.abenc_casetup()
 
-    t1_rev = 0
-
     users = {}  # public user data
-    authorities = {}
+    authorities = {}  # authority data dictionary
 
-    # charles ideas
-    # n_authorities = n_att_authorities
-    # n_authority_attr = n_attributes
-    authority_names = []
-    authorityAttributes = {}
-    attribute_master = []
+    authority_names = []  # list of attribute authorities
+    authorityAttributes = {}  # dictionary of attributes and the matching authorities
+    attribute_master = []  # master list of all possible attributes
 
-    seed_attributes = [i + 1 for i in range(n_attributes)]
+    seed_attributes = [i + 1 for i in range(n_attributes)]  # list comprehension to generate number list to aid in generation of attributes
 
     for i in range(n_att_authorities):
-        authority_name = "AUTHORITY" + str(i + 1)
-        authority_names.append(authority_name)
+        authority_name = "AUTHORITY" + str(i + 1)  # create attribute authorities
+        authority_names.append(authority_name)  # add new authorities to overall list
 
-        current_auth_attributes = []
+        current_auth_attributes = []  # attributes for current authority
         for seed_attr in seed_attributes:
-            authority_attribute = authority_name + "." + str(seed_attr)
-            current_auth_attributes.append(authority_attribute)
+            authority_attribute = authority_name + "." + str(seed_attr)  # create attribute
+            current_auth_attributes.append(authority_attribute)  # add attribute to authority attribute list
 
-        authorityAttributes[authority_name] = current_auth_attributes
-        attribute_master += current_auth_attributes
+        authorityAttributes[authority_name] = current_auth_attributes  # add authority as key and its attributes as value to the dictionary
+        attribute_master += current_auth_attributes  # add attributes created to master attribute list
 
     for authority in authorityAttributes.keys():
         omacpabe.abenc_aareg(GPP, authority, authorityAttributes[authority], authorities)
 
-
-    alice = {'id': 'alice', 'authoritySecretKeys': {}, 'keys': None}
-    bob = {'id': 'bob', 'authoritySecretKeys': {}, 'keys': None}
+    alice = {'id': 'alice', 'authoritySecretKeys': {}, 'keys': None}  # new user alice
+    bob = {'id': 'bob', 'authoritySecretKeys': {}, 'keys': None}  # new user bob
 
     alice['keys'], users[alice['id']] = omacpabe.abenc_userreg(GPP)
     bob['keys'], users[bob['id']] = omacpabe.abenc_userreg(GPP)
@@ -174,19 +162,18 @@ def revokedTest(n_trials, n_att_authorities, n_attributes):
     # print('SUCCESSFUL DECRYPTION 1')
 
     # revoke bob on an attribute
+    # get random attribute from existing policy
     attribute = policy_str.split()[0][1:]
-    # revocation_authority = policy_str.split()[0][1:-2]
-    # temp = attribute.split(".")
-    revocation_authority = attribute.split(".")[0]
-    # print(attribute)
-    # print(revocation_authority)
 
-    t1_rev_list = []
+    # derive authority name from attribute name
+    revocation_authority = attribute.split(".")[0]
+
+    t1_rev_list = []  # list to hold revocation times for multiple iterations
     for i in range(n_trials):
+        UK = omacpabe.abenc_ukeygen(GPP, authorities[revocation_authority], attribute, users[alice['id']])  # create update keys for user secret keys and ciphertexts
+        omacpabe.abenc_ctupdate(GPP, CT, attribute, UK['CUK'])  # update ciphertext
         start = clock()
-        UK = omacpabe.abenc_ukeygen(GPP, authorities[revocation_authority], attribute, users[alice['id']])
-        omacpabe.abenc_skupdate(alice['authoritySecretKeys'][revocation_authority], attribute, UK['KUK'])
-        omacpabe.abenc_ctupdate(GPP, CT, attribute, UK['CUK'])
+        omacpabe.abenc_skupdate(alice['authoritySecretKeys'][revocation_authority], attribute, UK['KUK'])  # update the user secret key
         t1_rev = clock() - start
         t1_rev_list.append(t1_rev)
 
