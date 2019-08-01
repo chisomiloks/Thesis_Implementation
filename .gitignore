@@ -7,6 +7,7 @@ tests/.pytest_cache/v/cache
 .vscode/
 src/test_files/
 jupyter_notebooks/
+charm_practice/
 
 # ignore __init__.py file
 __init__.py
