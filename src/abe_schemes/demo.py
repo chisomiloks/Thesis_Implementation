@@ -3,9 +3,14 @@
 import src.abe_schemes.abenc_omacpabe_test as omacpabe
 import src.abe_schemes.other_abe_schemes.kan_yang_eerdac_scheme_test as kan_yang
 import numpy as np
+import datetime as dt
+
+
+start_time = dt.datetime.now()
+print("Start time is", start_time)
 
 # basicTest(n_trials, n_att_authorities, n_attributes)
-n_trials = 100
+n_trials = 500
 n_att_authorities = [5, 10, 15, 20, 25]
 
 enc_time_att_authorities = []
@@ -14,6 +19,8 @@ dec_time_att_authorities = []
 dec_time_att_authorities_kan = []
 rev_time_att_authorities = []
 rev_time_att_authorities_kan = []
+
+print("Running experiment for", n_trials, "trials")
 
 for n_attauth in n_att_authorities:
     print("Running experiment for encryption, decryption, and revocation for my scheme and kan yang for", n_attauth, "authorities and", n_attauth * 10, "attributes.")
@@ -29,11 +36,16 @@ for n_attauth in n_att_authorities:
     dec_time_att_authorities_kan.append(dec_time_kan)
     rev_time_att_authorities_kan.append(rev_time)
 
+end_time = dt.datetime.now()
+print("End time is", end_time)
+
+duration = end_time - start_time
+print("Total duration is", duration)
 
 dec_times = np.array([dec_time_att_authorities, dec_time_att_authorities_kan]).transpose()
 enc_times = np.array([enc_time_att_authorities, enc_time_att_authorities_kan]).transpose()
 rev_times = np.array([rev_time_att_authorities, rev_time_att_authorities_kan]).transpose()
 
-np.save("decryption_time_data", dec_times)
-np.save("encryption_time_data", enc_times)
-np.save("revocation_time_data", rev_times)
+np.save("decryption_time_data_" + str(n_trials) + "_trials", dec_times)
+np.save("encryption_time_data_" + str(n_trials) + "_trials", enc_times)
+np.save("revocation_time_data_" + str(n_trials) + "_trials", rev_times)
