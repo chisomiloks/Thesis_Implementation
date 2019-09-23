@@ -5,15 +5,15 @@ from src.policy_generator import generate_policy_string as gp
 from time import clock
 import numpy as np
 
-def basicTest(n_trials, n_att_authorities, n_attributes):
+
+def basic_test(number_of_trials, number_of_attribute_authorities, number_of_attributes):
     """
 
-    :param n_trials: Number of times to run the function and calculate the average
-    :param n_att_authorities: Number of attribute authorities
-    :param n_attributes: Number of attributes
+    :param number_of_trials: Number of times to run the function and calculate the average
+    :param number_of_attribute_authorities: Number of attribute authorities
+    :param number_of_attributes: Number of attributes
     :return:
     """
-    # print("RUN basicTest")
 
     # scheme setup
     group_object = PairingGroup('SS512')
@@ -23,26 +23,26 @@ def basicTest(n_trials, n_att_authorities, n_attributes):
     users = {}  # public user data
     authorities = {}  # authority data dictionary
 
-    authority_names = []  # list of attribute authorities
-    authorityAttributes = {}  # dictionary of attributes and the matching authorities
-    attribute_master = []  # master list of all possible attributes
+    attribute_authorities = []  # list of attribute authorities
+    authorities_and_attributes = {}  # dictionary of attributes and the matching authorities
+    attribute_master_list = []  # master list of all possible attributes
 
-    seed_attributes = [i + 1 for i in range(n_attributes)]  # list comprehension to generate number list to aid in generation of attributes
+    seed_attributes = [i + 1 for i in range(number_of_attributes)]  # list comprehension to generate number list to aid in generation of attributes
 
-    for i in range(n_att_authorities):
-        authority_name = "AUTHORITY" + str(i + 1)  # create attribute authorities
-        authority_names.append(authority_name)  # add new authorities to overall list
+    for i in range(number_of_attribute_authorities):
+        attribute_authority_name = "AUTHORITY" + str(i + 1)  # create attribute authorities
+        attribute_authorities.append(attribute_authority_name)  # add new authorities to overall list
 
-        current_auth_attributes = []  # attributes for current authority
+        current_attribute_authority_attributes = []  # attributes for current authority
         for seed_attr in seed_attributes:
-            authority_attribute = authority_name + "." + str(seed_attr)  # create attribute
-            current_auth_attributes.append(authority_attribute)  # add attribute to authority attribute list
+            authority_attribute = attribute_authority_name + "." + str(seed_attr)  # create attribute
+            current_attribute_authority_attributes.append(authority_attribute)  # add attribute to authority attribute list
 
-        authorityAttributes[authority_name] = current_auth_attributes  # add authority as key and its attributes as value to the dictionary
-        attribute_master += current_auth_attributes  # add attributes created to master attribute list
+        authorities_and_attributes[attribute_authority_name] = current_attribute_authority_attributes  # add authority as key and its attributes as value to the dictionary
+        attribute_master_list += current_attribute_authority_attributes  # add attributes created to master attribute list
 
-    for authority in authorityAttributes.keys():
-        omacpabe.abenc_aareg(GPP, authority, authorityAttributes[authority], authorities)
+    for authority in authorities_and_attributes.keys():
+        omacpabe.abenc_aareg(GPP, authority, authorities_and_attributes[authority], authorities)
 
     alice = {'id': 'alice', 'authoritySecretKeys': {}, 'keys': None}  # new user alice
 
@@ -50,57 +50,57 @@ def basicTest(n_trials, n_att_authorities, n_attributes):
 
     for authority in authorities.keys():
         alice['authoritySecretKeys'][authority] = {}
-        for attr in authorityAttributes[authority]:
+        for attr in authorities_and_attributes[authority]:
             omacpabe.abenc_keygen(GPP, authorities[authority], attr, users[alice['id']], alice['authoritySecretKeys'][authority])
 
-    k = group_object.random(GT)
+    plain_text_secret_key_group_element = group_object.random(GT)
 
     # showing usage of serialize and deserialize for converting group elements
-    q = group_object.serialize(k)
-    assert isinstance(q, object)
-    obj = group_object.deserialize(q)
-    assert obj == k, 'SERIALIZATION ERROR!'
+    bit_string_from_group_element = group_object.serialize(plain_text_secret_key_group_element)
+    assert isinstance(bit_string_from_group_element, object)
+    group_element_from_bit_string = group_object.deserialize(bit_string_from_group_element)
+    assert group_element_from_bit_string == plain_text_secret_key_group_element, 'SERIALIZATION ERROR!'
 
-    policy_str = gp(attribute_master, n_attributes)  # generate policy
+    policy_string = gp(attribute_master_list, number_of_attributes)  # generate policy
 
     # benchmarking
-    t1_enc_list = []  # list to hold encryption times for multiple iterations
-    for i in range(n_trials):
-        start = clock()
-        CT = omacpabe.abenc_encrypt(GPP, policy_str, k, authorities)
-        t1_e = clock() - start
-        t1_enc_list.append(t1_e)
+    encryption_times = []  # list to hold encryption times for multiple iterations
+    for i in range(number_of_trials):
+        start_time = clock()
+        ciphertexts = omacpabe.abenc_encrypt(GPP, policy_string, plain_text_secret_key_group_element, authorities)
+        duration = clock() - start_time
+        encryption_times.append(duration)
 
-    avg_encryption_time = sum(t1_enc_list) / len(t1_enc_list)
-    # print("average encryption time = ", avg_encryption_time)
+    # average_encryption_time = sum(encryption_times) / len(encryption_times)
+    # print("average encryption time = ", average_encryption_time)
 
-    TK, C = omacpabe.abenc_generatetoken(GPP, CT, alice['authoritySecretKeys'], alice['keys'][0])
+    token, partially_decrypted_ciphertext = omacpabe.abenc_generatetoken(GPP, ciphertexts, alice['authoritySecretKeys'], alice['keys'][0])
 
-    t1_dec_list = []  # list to hold decryption times for multiple iterations
-    for i in range(n_trials):
-        start = clock()
-        PT = omacpabe.abenc_decrypt(C, TK, alice['keys'])
-        t1_d = clock() - start
-        t1_dec_list.append(t1_d)
+    decryption_times = []  # list to hold decryption times for multiple iterations
+    for i in range(number_of_trials):
+        start_time = clock()
+        plaintext = omacpabe.abenc_decrypt(partially_decrypted_ciphertext, token, alice['keys'])
+        duration = clock() - start_time
+        decryption_times.append(duration)
 
-    avg_decryption_time = sum(t1_dec_list) / len(t1_dec_list)
-    # print("average decryption time = ", avg_decryption_time)
+    # average_decryption_time = sum(decryption_times) / len(decryption_times)
+    # print("average decryption time = ", average_decryption_time)
 
-    assert k == PT, 'FAILED DECRYPTION!'
+    assert plain_text_secret_key_group_element == plaintext, 'FAILED DECRYPTION!'
     # print('SUCCESSFUL DECRYPTION')
 
-    return avg_encryption_time, avg_decryption_time
+    return encryption_times, decryption_times
+    # return average_encryption_time, average_decryption_time
 
 
-def revokedTest(n_trials, n_att_authorities, n_attributes):
+def revocation_test(number_of_trials, number_of_attribute_authorities, number_of_attributes):
     """
 
-    :param n_trials:
-    :param n_att_authorities:
-    :param n_attributes:
+    :param number_of_trials:
+    :param number_of_attribute_authorities:
+    :param number_of_attributes:
     :return:
     """
-    # print("RUN revokedTest")
 
     # scheme setup
     group_object = PairingGroup('SS512')
@@ -110,26 +110,26 @@ def revokedTest(n_trials, n_att_authorities, n_attributes):
     users = {}  # public user data
     authorities = {}  # authority data dictionary
 
-    authority_names = []  # list of attribute authorities
-    authorityAttributes = {}  # dictionary of attributes and the matching authorities
-    attribute_master = []  # master list of all possible attributes
+    attribute_authorities = []  # list of attribute authorities
+    authorities_and_attributes = {}  # dictionary of attributes and the matching authorities
+    attribute_master_list = []  # master list of all possible attributes
 
-    seed_attributes = [i + 1 for i in range(n_attributes)]  # list comprehension to generate number list to aid in generation of attributes
+    seed_attributes = [i + 1 for i in range(number_of_attributes)]  # list comprehension to generate number list to aid in generation of attributes
 
-    for i in range(n_att_authorities):
-        authority_name = "AUTHORITY" + str(i + 1)  # create attribute authorities
-        authority_names.append(authority_name)  # add new authorities to overall list
+    for i in range(number_of_attribute_authorities):
+        attribute_authority_name = "AUTHORITY" + str(i + 1)  # create attribute authorities
+        attribute_authorities.append(attribute_authority_name)  # add new authorities to overall list
 
-        current_auth_attributes = []  # attributes for current authority
+        current_attribute_authority_attributes = []  # attributes for current authority
         for seed_attr in seed_attributes:
-            authority_attribute = authority_name + "." + str(seed_attr)  # create attribute
-            current_auth_attributes.append(authority_attribute)  # add attribute to authority attribute list
+            authority_attribute = attribute_authority_name + "." + str(seed_attr)  # create attribute
+            current_attribute_authority_attributes.append(authority_attribute)  # add attribute to authority attribute list
 
-        authorityAttributes[authority_name] = current_auth_attributes  # add authority as key and its attributes as value to the dictionary
-        attribute_master += current_auth_attributes  # add attributes created to master attribute list
+        authorities_and_attributes[attribute_authority_name] = current_attribute_authority_attributes  # add authority as key and its attributes as value to the dictionary
+        attribute_master_list += current_attribute_authority_attributes  # add attributes created to master attribute list
 
-    for authority in authorityAttributes.keys():
-        omacpabe.abenc_aareg(GPP, authority, authorityAttributes[authority], authorities)
+    for authority in authorities_and_attributes.keys():
+        omacpabe.abenc_aareg(GPP, authority, authorities_and_attributes[authority], authorities)
 
     alice = {'id': 'alice', 'authoritySecretKeys': {}, 'keys': None}  # new user alice
     bob = {'id': 'bob', 'authoritySecretKeys': {}, 'keys': None}  # new user bob
@@ -140,84 +140,85 @@ def revokedTest(n_trials, n_att_authorities, n_attributes):
     for authority in authorities.keys():
         alice['authoritySecretKeys'][authority] = {}
         bob['authoritySecretKeys'][authority] = {}
-        for attr in authorityAttributes[authority]:
+        for attr in authorities_and_attributes[authority]:
             omacpabe.abenc_keygen(GPP, authorities[authority], attr, users[alice['id']], alice['authoritySecretKeys'][authority])
             omacpabe.abenc_keygen(GPP, authorities[authority], attr, users[bob['id']], bob['authoritySecretKeys'][authority])
 
-    k = group_object.random(GT)
+    plain_text_secret_key_group_element = group_object.random(GT)
 
-    # policy_str = '((AUTHORITY1.1 or AUTHORITY2.1 or AUTHORITY3.1 or AUTHORITY4.1))'
-    policy_str = gp(attribute_master, n_attributes)
+    # policy_string = '((AUTHORITY1.1 or AUTHORITY2.1 or AUTHORITY3.1 or AUTHORITY4.1))'
+    policy_string = gp(attribute_master_list, number_of_attributes)
 
-    CT = omacpabe.abenc_encrypt(GPP, policy_str, k, authorities)
+    ciphertexts = omacpabe.abenc_encrypt(GPP, policy_string, plain_text_secret_key_group_element, authorities)
 
-    TK1a, C1a = omacpabe.abenc_generatetoken(GPP, CT, alice['authoritySecretKeys'], alice['keys'][0])
-    TK1b, C1b = omacpabe.abenc_generatetoken(GPP, CT, bob['authoritySecretKeys'], bob['keys'][0])
+    alice_token_v1, alice_partially_decrypted_ciphertext_v1 = omacpabe.abenc_generatetoken(GPP, ciphertexts, alice['authoritySecretKeys'], alice['keys'][0])
+    bob_token_v1, bob_partially_decrypted_ciphertext_v1 = omacpabe.abenc_generatetoken(GPP, ciphertexts, bob['authoritySecretKeys'], bob['keys'][0])
 
-    PT1a = omacpabe.abenc_decrypt(C1a, TK1a, alice['keys'])
-    PT1b = omacpabe.abenc_decrypt(C1b, TK1b, bob['keys'])
+    alice_plain_text_v1 = omacpabe.abenc_decrypt(alice_partially_decrypted_ciphertext_v1, alice_token_v1, alice['keys'])
+    bob_plain_text_v1 = omacpabe.abenc_decrypt(bob_partially_decrypted_ciphertext_v1, bob_token_v1, bob['keys'])
 
-    assert k == PT1a, 'FAILED DECRYPTION (1a)!'
-    assert k == PT1b, 'FAILED DECRYPTION (1b)!'
+    assert plain_text_secret_key_group_element == alice_plain_text_v1, 'FAILED DECRYPTION (1a)!'
+    assert plain_text_secret_key_group_element == bob_plain_text_v1, 'FAILED DECRYPTION (1b)!'
     # print('SUCCESSFUL DECRYPTION 1')
 
     # revoke bob on an attribute
     # get random attribute from existing policy
-    attribute = policy_str.split()[0][1:]
-
+    attribute_to_be_revoked = policy_string.split()[0][1:]
     # derive authority name from attribute name
-    revocation_authority = attribute.split(".")[0]
+    revocation_authority = attribute_to_be_revoked.split(".")[0]
 
-    t1_rev_list = []  # list to hold revocation times for multiple iterations
-    for i in range(n_trials):
-        UK = omacpabe.abenc_ukeygen(GPP, authorities[revocation_authority], attribute, users[alice['id']])  # create update keys for user secret keys and ciphertexts
-        omacpabe.abenc_ctupdate(GPP, CT, attribute, UK['CUK'])  # update ciphertext
-        start = clock()
-        omacpabe.abenc_skupdate(alice['authoritySecretKeys'][revocation_authority], attribute, UK['KUK'])  # update the user secret key
-        t1_rev = clock() - start
-        t1_rev_list.append(t1_rev)
+    revocation_times = []  # list to hold revocation times for multiple iterations
+    for i in range(number_of_trials):
+        update_keys = omacpabe.abenc_ukeygen(GPP, authorities[revocation_authority], attribute_to_be_revoked, users[alice['id']])  # create update keys for user secret keys and ciphertexts
+        omacpabe.abenc_ctupdate(GPP, ciphertexts, attribute_to_be_revoked, update_keys['CUK'])  # update ciphertexts
+        start_time = clock()
+        omacpabe.abenc_skupdate(alice['authoritySecretKeys'][revocation_authority], attribute_to_be_revoked, update_keys['KUK'])  # update the user secret key
+        duration = clock() - start_time
+        revocation_times.append(duration)
 
-    avg_revocation_time = sum(t1_rev_list) / len(t1_rev_list)
-    # print("average revocation time = ", avg_revocation_time)
+    # average_revocation_time = sum(revocation_times) / len(revocation_times)
+    # print("average revocation time = ", average_revocation_time)
 
-    TK2a, C2a = omacpabe.abenc_generatetoken(GPP, CT, alice['authoritySecretKeys'], alice['keys'][0])
-    TK2b, C2b = omacpabe.abenc_generatetoken(GPP, CT, bob['authoritySecretKeys'], bob['keys'][0])
+    alice_token_v2, alice_partially_decrypted_ciphertext_v2 = omacpabe.abenc_generatetoken(GPP, ciphertexts, alice['authoritySecretKeys'], alice['keys'][0])
+    bob_token_v2, bob_partially_decrypted_ciphertext_v2 = omacpabe.abenc_generatetoken(GPP, ciphertexts, bob['authoritySecretKeys'], bob['keys'][0])
 
-    PT2a = omacpabe.abenc_decrypt(C2a, TK2a, alice['keys'])
-    PT2b = omacpabe.abenc_decrypt(C2b, TK2b, bob['keys'])
+    alice_plaintext_v2 = omacpabe.abenc_decrypt(alice_partially_decrypted_ciphertext_v2, alice_token_v2, alice['keys'])
+    bob_plaintext_v2 = omacpabe.abenc_decrypt(bob_partially_decrypted_ciphertext_v2, bob_token_v2, bob['keys'])
 
-    assert k == PT2a, 'FAILED DECRYPTION (2a)!'
-    assert k != PT2b, 'SUCCESSFUL DECRYPTION (2b)!'
+    assert plain_text_secret_key_group_element == alice_plaintext_v2, 'FAILED DECRYPTION (2a)!'
+    assert plain_text_secret_key_group_element != bob_plaintext_v2, 'SUCCESSFUL DECRYPTION (2b)!'
     # print('SUCCESSFUL DECRYPTION 2')
-    return avg_revocation_time
+
+    # return average_revocation_time
+    return revocation_times
 
 
 if __name__ == '__main__':
-    # basicTest(n_trials, n_att_authorities, n_attributes)
-    n_trials = 1
-    # n_att_authorities = [5, 10, 15, 20, 25]
-    n_att_authorities = [1, 2, 3, 4, 5]
+    # basic_test(number_of_trials, number_of_authorities, number_of_attributes)
+    number_of_trials = 1
+    # number_of_attribute_authorities = [5, 10, 15, 20, 25]
+    number_of_attribute_authorities = [1, 2, 3, 4, 5]
 
-    enc_time_att_authorities = []
-    dec_time_att_authorities = []
-    rev_time_att_authorities = []
+    encryption_time_data = []
+    decryption_time_data = []
+    revocation_time_data = []
 
-    for n_attauth in n_att_authorities:
-        enc_time, dec_time = basicTest(n_trials, n_attauth, 15)
-        rev_time = revokedTest(n_trials, n_attauth, 15)
+    for number_of_authorities in number_of_attribute_authorities:
+        enc_time, dec_time = basic_test(number_of_trials, number_of_authorities, 15)
+        rev_time = revocation_test(number_of_trials, number_of_authorities, 15)
 
-        enc_time_att_authorities.append(enc_time)
-        dec_time_att_authorities.append(dec_time)
-        rev_time_att_authorities.append(rev_time)
+        encryption_time_data.append(enc_time)
+        decryption_time_data.append(dec_time)
+        revocation_time_data.append(rev_time)
 
-    print("encryption times", enc_time_att_authorities)
-    print("decryption times", dec_time_att_authorities)
-    print("revocation times", rev_time_att_authorities)
+    print("encryption times", encryption_time_data)
+    print("decryption times", decryption_time_data)
+    print("revocation times", revocation_time_data)
 
     # combine lists and convert to numpy array
-    enc_dec_times = np.array([enc_time_att_authorities, dec_time_att_authorities]).transpose()
+    enc_dec_times = np.array([encryption_time_data, decryption_time_data]).transpose()
     # save as npy file
     np.save('my_test_data', enc_dec_times)
 
-    for n_attauth in n_att_authorities:
-        revokedTest(n_trials, n_attauth, 5)
+    for number_of_authorities in number_of_attribute_authorities:
+        revocation_test(number_of_trials, number_of_authorities, 5)
