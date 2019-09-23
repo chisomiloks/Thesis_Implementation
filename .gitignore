@@ -8,6 +8,7 @@ tests/.pytest_cache/v/cache
 src/test_files/
 jupyter_notebooks/
 charm_practice/
+results/
 
 # ignore __init__.py file
 __init__.py
