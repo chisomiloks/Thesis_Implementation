@@ -63,15 +63,16 @@ for number_of_authorities in number_of_attribute_authorities:
     revocation_time_data_kan_yang_scheme[number_of_authorities] = sum(revocation_time_kan_yang_temp) / len(revocation_time_kan_yang_temp)
 
     # writing individual run time for the trials to the appropriate file
+    # data_time_stamp = dt.datetime.now().strftime("%d-%m-%y_%H:%M:%S")
     # my scheme
-    wt.write_to_text_file(encryption_time_my_scheme_temp, "My Scheme - Enc_Times_" + str(number_of_authorities) + "_Authorities_" + str(number_of_trials) + "_trials")
-    wt.write_to_text_file(decryption_time_my_scheme_temp, "My Scheme - Dec_Times_" + str(number_of_authorities) + "_Authorities_" + str(number_of_trials) + "_trials")
-    wt.write_to_text_file(revocation_time_my_scheme_temp, "My Scheme - Rev_Times_" + str(number_of_authorities) + "_Authorities_" + str(number_of_trials) + "_trials")
+    wt.write_to_text_file(encryption_time_my_scheme_temp, "My Scheme - Enc_Times_" + str(number_of_authorities) + "_Authorities_" + str(number_of_trials) + "_trials_" + dt.datetime.now().strftime("%d-%m-%y_%H:%M:%S"))
+    wt.write_to_text_file(decryption_time_my_scheme_temp, "My Scheme - Dec_Times_" + str(number_of_authorities) + "_Authorities_" + str(number_of_trials) + "_trials_" + dt.datetime.now().strftime("%d-%m-%y_%H:%M:%S"))
+    wt.write_to_text_file(revocation_time_my_scheme_temp, "My Scheme - Rev_Times_" + str(number_of_authorities) + "_Authorities_" + str(number_of_trials) + "_trials_" + dt.datetime.now().strftime("%d-%m-%y_%H:%M:%S"))
 
     # my scheme
-    wt.write_to_text_file(encryption_time_kan_yang_temp, "Kan Yang Scheme - Enc_Times_" + str(number_of_authorities) + "_Authorities_" + str(number_of_trials) + "_trials")
-    wt.write_to_text_file(decryption_time_kan_yang_temp, "Kan Yang Scheme - Dec_Times_" + str(number_of_authorities) + "_Authorities_" + str(number_of_trials) + "_trials")
-    wt.write_to_text_file(revocation_time_kan_yang_temp, "Kan Yang Scheme - Rev_Times_" + str(number_of_authorities) + "_Authorities_" + str(number_of_trials) + "_trials")
+    wt.write_to_text_file(encryption_time_kan_yang_temp, "Kan Yang Scheme - Enc_Times_" + str(number_of_authorities) + "_Authorities_" + str(number_of_trials) + "_trials_" + dt.datetime.now().strftime("%d-%m-%y_%H:%M:%S"))
+    wt.write_to_text_file(decryption_time_kan_yang_temp, "Kan Yang Scheme - Dec_Times_" + str(number_of_authorities) + "_Authorities_" + str(number_of_trials) + "_trials_" + dt.datetime.now().strftime("%d-%m-%y_%H:%M:%S"))
+    wt.write_to_text_file(revocation_time_kan_yang_temp, "Kan Yang Scheme - Rev_Times_" + str(number_of_authorities) + "_Authorities_" + str(number_of_trials) + "_trials_" + dt.datetime.now().strftime("%d-%m-%y_%H:%M:%S"))
 
     # print(encryption_time_data_my_scheme[number_of_authorities])
     # print(encryption_time_my_scheme_temp)
