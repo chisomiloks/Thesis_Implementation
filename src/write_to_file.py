@@ -8,7 +8,7 @@ To contain function to write file
 import os.path
 import numpy as np
 
-data_folder = '/home/munachisoilokah/Google Drive/UOIT/MASc Thesis/Framework Source Code/Results/'
+data_folder = '/home/munachisoilokah/Google Drive/UOIT/MASc Thesis/Framework Source Code/results/'
 
 
 def write_to_text_file(info, file_name="Sample Data File"):
@@ -19,8 +19,8 @@ def write_to_text_file(info, file_name="Sample Data File"):
     :param file_name: File name (use default is no name is provided).
     """
 
-    # destination = os.path.join(os.path.expanduser('~'), 'Google Drive', 'UOIT', 'MASc Thesis', 'Framework Source Code', 'Result Files', file_name+'.txt')
-    destination = os.path.join(data_folder, 'Time Data', file_name+'.txt')
+    # destination = os.path.join(os.path.expanduser('~'), 'Google Drive', 'UOIT', 'MASc Thesis', 'Framework Source Code', 'results', file_name+'.txt')
+    destination = os.path.join(data_folder, 'time_data', file_name+'.txt')
 
     if not isinstance(info, list):
         print("Function only works with Lists.")
@@ -39,5 +39,5 @@ def write_to_npy_file(info, file_name="Sample Data File"):
     :return:
     """
 
-    destination = os.path.join(data_folder, 'Numpy', file_name)
+    destination = os.path.join(data_folder, 'numpy', file_name)
     np.save(destination, info)
