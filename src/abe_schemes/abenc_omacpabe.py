@@ -60,7 +60,7 @@ class OMACPABE(object):
         GMK = {'a': a,
                'b': b,
                }
-
+#
         return (GPP, GMK)
 
     def abenc_userreg(self, GPP, entity='user'):
@@ -93,7 +93,7 @@ class OMACPABE(object):
         return (GPK_uid, GSK_uid_prime), {'GSK_uid': GSK_uid,
                                           'GPK_uid_prime': GPK_uid_prime,
                                           'u_uid': u_uid,
-                                          }
+                                        }
 
     def abenc_aareg(self, GPP, authority_id, attributes, registered_authorities):
         """
