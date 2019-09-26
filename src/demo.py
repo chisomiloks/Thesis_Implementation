@@ -1,7 +1,7 @@
 # from src.abe_schemes.other_abe_schemes.kan_yang_eerdac_scheme_test import basicTest as bt1
 # from src.abe_schemes.abenc_omacpabe_test import basicTest as bt2
-import src.abe_schemes.abenc_omacpabe_test as omacpabe
-import src.abe_schemes.other_abe_schemes.kan_yang_eerdac_scheme_test as kan_yang
+import src.abenc_omacpabe_test as omacpabe
+import src.kan_yang_eerdac_scheme_test as kan_yang
 import numpy as np
 import datetime as dt
 import src.write_to_file as wt
@@ -12,12 +12,12 @@ print("Start time is", start_time)
 
 # basic_test(number_of_trials, number_of_attribute_authorities, number_of_attributes)
 # for framework experiment
-# number_of_trials = 500
-# number_of_attribute_authorities = [5, 10, 15, 20, 25]
+number_of_trials = 500
+number_of_attribute_authorities = [5, 10, 15, 20, 25]
 
 # for testing code
-number_of_trials = 5
-number_of_attribute_authorities = [2, 4, 6]
+# number_of_trials = 5
+# number_of_attribute_authorities = [2, 4, 6]
 
 # create dictionaries to hold time data for number of attribute authorities
 # key: value -- Number of authorities: time to run algorithm
