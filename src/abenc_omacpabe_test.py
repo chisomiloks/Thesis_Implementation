@@ -6,10 +6,10 @@ from time import clock
 import numpy as np
 
 
-def basic_test(number_of_trials, number_of_attribute_authorities, number_of_attributes):
+def basic_test(number_of_basic_trials, number_of_attribute_authorities, number_of_attributes):
     """
 
-    :param number_of_trials: Number of times to run the function and calculate the average
+    :param number_of_basic_trials: Number of times to run the function and calculate the average
     :param number_of_attribute_authorities: Number of attribute authorities
     :param number_of_attributes: Number of attributes
     :return:
@@ -65,7 +65,7 @@ def basic_test(number_of_trials, number_of_attribute_authorities, number_of_attr
 
     # benchmarking
     encryption_times = []  # list to hold encryption times for multiple iterations
-    for i in range(number_of_trials):
+    for i in range(number_of_basic_trials):
         start_time = clock()
         ciphertexts = omacpabe.abenc_encrypt(GPP, policy_string, plain_text_secret_key_group_element, authorities)
         duration = clock() - start_time
@@ -77,7 +77,7 @@ def basic_test(number_of_trials, number_of_attribute_authorities, number_of_attr
     token, partially_decrypted_ciphertext = omacpabe.abenc_generatetoken(GPP, ciphertexts, alice['authoritySecretKeys'], alice['keys'][0])
 
     decryption_times = []  # list to hold decryption times for multiple iterations
-    for i in range(number_of_trials):
+    for i in range(number_of_basic_trials):
         start_time = clock()
         plaintext = omacpabe.abenc_decrypt(partially_decrypted_ciphertext, token, alice['keys'])
         duration = clock() - start_time
@@ -93,10 +93,10 @@ def basic_test(number_of_trials, number_of_attribute_authorities, number_of_attr
     # return average_encryption_time, average_decryption_time
 
 
-def revocation_test(number_of_trials, number_of_attribute_authorities, number_of_attributes):
+def revocation_test(number_of_revocation_trials, number_of_attribute_authorities, number_of_attributes):
     """
 
-    :param number_of_trials:
+    :param number_of_revocation_trials:
     :param number_of_attribute_authorities:
     :param number_of_attributes:
     :return:
@@ -168,7 +168,7 @@ def revocation_test(number_of_trials, number_of_attribute_authorities, number_of
     revocation_authority = attribute_to_be_revoked.split(".")[0]
 
     revocation_times = []  # list to hold revocation times for multiple iterations
-    for i in range(number_of_trials):
+    for i in range(number_of_revocation_trials):
         update_keys = omacpabe.abenc_ukeygen(GPP, authorities[revocation_authority], attribute_to_be_revoked, users[alice['id']])  # create update keys for user secret keys and ciphertexts
         omacpabe.abenc_ctupdate(GPP, ciphertexts, attribute_to_be_revoked, update_keys['CUK'])  # update ciphertexts
         start_time = clock()
