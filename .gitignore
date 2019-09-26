@@ -166,3 +166,7 @@ venv.bak/
 
 # Numpy data files
 *.npy
+
+# Sample Test Files
+src/My Scheme.txt
+src/kan_yang_eerdac_scheme_test.py
