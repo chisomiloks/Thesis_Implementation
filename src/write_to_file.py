@@ -8,8 +8,11 @@ To contain function to write file
 import os.path
 import numpy as np
 
+# use this for linux
 data_folder = '/home/munachisoilokah/Google Drive/UOIT/MASc Thesis/Framework Source Code/results/'
 
+# use this for mac
+# data_folder = '/Users/chisky/Google Drive/UOIT/MASc Thesis/Framework Source Code/results/'
 
 def write_to_text_file(info, file_name="Sample Data File"):
     """
