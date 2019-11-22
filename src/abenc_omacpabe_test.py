@@ -181,7 +181,7 @@ def revocation_test(number_of_revocation_trials, number_of_attribute_authorities
 
     for element in random_elements:
         revoked_attributes.append(attribute_master_list[element])
-    
+
     # print(revoked_attributes)
 
     revocation_times = []  # list to hold revocation times for multiple iterations
