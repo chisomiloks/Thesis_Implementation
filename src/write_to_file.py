@@ -9,10 +9,13 @@ import os.path
 import numpy as np
 
 # use this for linux
-data_folder = '/home/munachisoilokah/Google Drive/UOIT/MASc Thesis/Framework Source Code/results/'
+# data_folder = '/home/munachisoilokah/Google Drive/UOIT/MASc Thesis/Framework Source Code/results/'
+data_folder = '/home/munachisoilokah/Google Drive/UOIT/MASc Thesis/Framework Source Code/results/temp'  # use this for short experiments
 
 # use this for mac
 # data_folder = '/Users/chisky/Google Drive/UOIT/MASc Thesis/Framework Source Code/results/'
+# data_folder = '/Users/chisky/Google Drive/UOIT/MASc Thesis/Framework Source Code/results/temp'  # use this for short experiments
+
 
 def write_to_text_file(info, file_name="Sample Data File"):
     """
