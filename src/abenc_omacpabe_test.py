@@ -4,6 +4,7 @@ from charm.toolbox.pairinggroup import GT
 from src.policy_generator import generate_policy_string as gp
 from time import clock
 import numpy as np
+import random
 
 
 def basic_test(number_of_basic_trials, number_of_attribute_authorities, number_of_attributes):
@@ -27,7 +28,8 @@ def basic_test(number_of_basic_trials, number_of_attribute_authorities, number_o
     authorities_and_attributes = {}  # dictionary of attributes and the matching authorities
     attribute_master_list = []  # master list of all possible attributes
 
-    seed_attributes = [i + 1 for i in range(number_of_attributes)]  # list comprehension to generate number list to aid in generation of attributes
+    seed_length = int(number_of_attributes / number_of_attribute_authorities)
+    seed_attributes = [i + 1 for i in range(seed_length)]  # list comprehension to generate number list to aid in generation of attributes
 
     for i in range(number_of_attribute_authorities):
         attribute_authority_name = "AUTHORITY" + str(i + 1)  # create attribute authorities
@@ -93,7 +95,7 @@ def basic_test(number_of_basic_trials, number_of_attribute_authorities, number_o
     # return average_encryption_time, average_decryption_time
 
 
-def revocation_test(number_of_revocation_trials, number_of_attribute_authorities, number_of_attributes):
+def revocation_test(number_of_revocation_trials, number_of_attribute_authorities, number_of_attributes, number_attributes_to_revoke):
     """
 
     :param number_of_revocation_trials:
@@ -114,7 +116,8 @@ def revocation_test(number_of_revocation_trials, number_of_attribute_authorities
     authorities_and_attributes = {}  # dictionary of attributes and the matching authorities
     attribute_master_list = []  # master list of all possible attributes
 
-    seed_attributes = [i + 1 for i in range(number_of_attributes)]  # list comprehension to generate number list to aid in generation of attributes
+    seed_length = int(number_of_attributes/number_of_attribute_authorities)
+    seed_attributes = [i + 1 for i in range(seed_length)]  # list comprehension to generate number list to aid in generation of attributes
 
     for i in range(number_of_attribute_authorities):
         attribute_authority_name = "AUTHORITY" + str(i + 1)  # create attribute authorities
@@ -161,18 +164,39 @@ def revocation_test(number_of_revocation_trials, number_of_attribute_authorities
     assert plain_text_secret_key_group_element == bob_plain_text_v1, 'FAILED DECRYPTION (1b)!'
     # print('SUCCESSFUL DECRYPTION 1')
 
+    # testing the selection of random attribute for revocation
+    # sample_attribute = attribute_master_list[random.sample(range(1, len(attribute_master_list)), 1)[0]]
+
     # revoke bob on an attribute
     # get random attribute from existing policy
-    attribute_to_be_revoked = policy_string.split()[0][1:]
+    # attribute_to_be_revoked = policy_string.split()[0][1:]
+
     # derive authority name from attribute name
-    revocation_authority = attribute_to_be_revoked.split(".")[0]
+    # revocation_authority = attribute_to_be_revoked.split(".")[0]
+
+    revoked_attributes = []
+    random_elements = random.sample(range(1, number_of_attributes), number_attributes_to_revoke)
+
+    update_keys_temp = {}
+
+    for element in random_elements:
+        revoked_attributes.append(attribute_master_list[element])
+    
+    # print(revoked_attributes)
 
     revocation_times = []  # list to hold revocation times for multiple iterations
     for i in range(number_of_revocation_trials):
-        update_keys = omacpabe.abenc_ukeygen(GPP, authorities[revocation_authority], attribute_to_be_revoked, users[alice['id']])  # create update keys for user secret keys and ciphertexts
-        omacpabe.abenc_ctupdate(GPP, ciphertexts, attribute_to_be_revoked, update_keys['CUK'])  # update ciphertexts
+        # update_keys = omacpabe.abenc_ukeygen(GPP, authorities[revocation_authority], attribute_to_be_revoked, users[alice['id']])  # create update keys for user secret keys and ciphertexts
+        # omacpabe.abenc_ctupdate(GPP, ciphertexts, attribute_to_be_revoked, update_keys_temp[attribute_to_be_revoked]['CUK'])  # update ciphertexts
+        # omacpabe.abenc_skupdate(alice['authoritySecretKeys'][revocation_authority], attribute_to_be_revoked, update_keys_temp[attribute_to_be_revoked]['KUK'])  # update the user secret key
+        for temp_attribute in revoked_attributes:
+            update_keys_temp[temp_attribute] = omacpabe.abenc_ukeygen(GPP, authorities[temp_attribute.split(".")[0]], temp_attribute, users[alice['id']])
+            # print(update_keys_temp)
+        for temp_attribute in revoked_attributes:
+            omacpabe.abenc_ctupdate(GPP, ciphertexts, temp_attribute, update_keys_temp[temp_attribute]['CUK'])
         start_time = clock()
-        omacpabe.abenc_skupdate(alice['authoritySecretKeys'][revocation_authority], attribute_to_be_revoked, update_keys['KUK'])  # update the user secret key
+        for temp_attribute in revoked_attributes:
+            omacpabe.abenc_skupdate(alice['authoritySecretKeys'][temp_attribute.split(".")[0]], temp_attribute, update_keys_temp[temp_attribute]['KUK'])
         duration = clock() - start_time
         revocation_times.append(duration)
 
@@ -204,8 +228,8 @@ if __name__ == '__main__':
     revocation_time_data = []
 
     for number_of_authorities in number_of_attribute_authorities:
-        enc_time, dec_time = basic_test(number_of_trials, number_of_authorities, 15)
-        rev_time = revocation_test(number_of_trials, number_of_authorities, 15)
+        enc_time, dec_time = basic_test(number_of_trials, number_of_authorities, number_of_authorities * 5)
+        rev_time = revocation_test(number_of_trials, number_of_authorities, number_of_authorities * 5, number_of_authorities * 3)
 
         encryption_time_data.append(enc_time)
         decryption_time_data.append(dec_time)
@@ -216,9 +240,9 @@ if __name__ == '__main__':
     print("revocation times", revocation_time_data)
 
     # combine lists and convert to numpy array
-    enc_dec_times = np.array([encryption_time_data, decryption_time_data]).transpose()
-    # save as npy file
-    np.save('my_test_data', enc_dec_times)
-
-    for number_of_authorities in number_of_attribute_authorities:
-        revocation_test(number_of_trials, number_of_authorities, 5)
+    # enc_dec_times = np.array([encryption_time_data, decryption_time_data]).transpose()
+    # # save as npy file
+    # np.save('my_test_data', enc_dec_times)
+    #
+    # for number_of_authorities in number_of_attribute_authorities:
+    #     revocation_test(number_of_trials, number_of_authorities, 5)
