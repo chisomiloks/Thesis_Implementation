@@ -69,7 +69,7 @@ class OMACPABE(object):
         key pairs (i.e. Public and Private keys)
 
         :param GPP: Global Public Parameters (GPP)
-        # :param entity: the entity executing algorithm
+        :param entity: the entity executing algorithm
         # :param registered_users: Dictionary of already registered users
         :return: User Global Secret and Public Keys (GSK_uid, GSK_uid_prime, GPK_uid, GPK_uid_prime)
         """
@@ -93,11 +93,12 @@ class OMACPABE(object):
         return (GPK_uid, GSK_uid_prime), {'GSK_uid': GSK_uid,
                                           'GPK_uid_prime': GPK_uid_prime,
                                           'u_uid': u_uid,
-                                        }
+                                          }
 
     def abenc_aareg(self, GPP, authority_id, attributes, registered_authorities):
         """
         Registration of Attribute Authorities (AA) by the Certificate Authority (CA)
+
         :param GPP: Global Public Parameters (GPP)
         :param authority_id: Unique ID for Attribute Authority
         :param attributes: Attributes managed by the authority
@@ -145,6 +146,7 @@ class OMACPABE(object):
     def abenc_keygen(self, GPP, authority, attribute, user_object, USK=None):
         """
         Generate attribute authority related secret keys for users (executed by the corresponding attribute authority)
+
         :param GPP: Global Public Parameters
         :param authority: Attribute Authority Parameters
         :param attribute: Attribute for which secret key is being generated
@@ -181,6 +183,7 @@ class OMACPABE(object):
     def abenc_encrypt(self, GPP, policy_string, k, authority):
         """
         Encryption algorithm which encrypts the message given, based on the policy
+
         :param GPP: Global Public Parameters
         :param policy_string: Policy
         :param k: Content Key (i.e group element based on AES key)
