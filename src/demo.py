@@ -10,12 +10,12 @@ print("Start time is", start_time)
 
 # basic_test(number_of_trials, number_of_attribute_authorities, number_of_attributes)
 # for framework experiment
-# number_of_trials = 500
-# number_of_attribute_authorities = [5, 10, 15, 20, 25]
+number_of_trials = 500
+number_of_attribute_authorities = [5, 10, 15, 20, 25]
 
 # for testing code
-number_of_trials = 5
-number_of_attribute_authorities = [2, 4, 6, 8, 10]
+# number_of_trials = 5
+# number_of_attribute_authorities = [2, 4, 6, 8, 10]
 
 # create dictionaries to hold time data for number of attribute authorities
 # key: value -- Number of authorities: time to run algorithm
