@@ -82,6 +82,7 @@ encryption_time_data = np.array([my_scheme_encryption_times, kan_yang_scheme_enc
 decryption_time_data = np.array([my_scheme_decryption_times, kan_yang_scheme_decryption_times]).transpose()
 revocation_time_data = np.array([my_scheme_revocation_times, my_scheme_revocation_times]).transpose()
 
+data_time_stamp = dt.datetime.now().strftime("%d-%m-%y_%H:%M:%S")
 # write the corresponding data to a npy file for plotting
 wt.write_to_npy_file(encryption_time_data, "encryption_time_data_" + str(number_of_trials) + "_trials_" + data_time_stamp)
 wt.write_to_npy_file(decryption_time_data, "decryption_time_data_" + str(number_of_trials) + "_trials_" + data_time_stamp)
